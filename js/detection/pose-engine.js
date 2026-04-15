@@ -66,20 +66,23 @@ export class PoseEngine {
   async init(videoElement) {
     this.videoElement = videoElement;
 
-    // Step 1: Start camera
+    // Step 1: Start camera (Tối giản ràng buộc để tránh lỗi OverconstrainedError trên thiết bị cũ/kén camera)
     this._updateStatus('Requesting camera access / Đang mở camera...');
     try {
+      // Thử xin quyền với kích thước vừa phải và ưu tiên cam trước
       this.stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'user',
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          frameRate: { ideal: 30 }
-        },
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false
       });
     } catch (err) {
-      throw new Error('Camera access denied. Please allow camera access to play! / Vui lòng cho phép truy cập camera!');
+      console.warn("Lỗi xin quyền camera lần 1:", err);
+      // Phương án dự phòng (Fallback): Ép xin quyền cơ bản nhất, không một ràng buộc nào
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      } catch (fallbackErr) {
+        console.error("Camera access failed completely:", fallbackErr);
+        throw new Error('Bị chặn Camera (Thường do đang mở web này trong app Zalo/Messenger, hãy copy link mở bằng Chrome/Safari gốc) !');
+      }
     }
 
     this.videoElement.srcObject = this.stream;
