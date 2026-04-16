@@ -117,7 +117,7 @@ export class PoseEngine {
           delegate: 'GPU'
         },
         runningMode: 'VIDEO',
-        numPoses: 1,
+        numPoses: 2,
         minPoseDetectionConfidence: 0.5,
         minPosePresenceConfidence: 0.5,
         minTrackingConfidence: 0.5
@@ -142,7 +142,7 @@ export class PoseEngine {
           delegate: 'CPU'
         },
         runningMode: 'VIDEO',
-        numPoses: 1,
+        numPoses: 2,
         minPoseDetectionConfidence: 0.5,
         minPosePresenceConfidence: 0.5,
         minTrackingConfidence: 0.5
@@ -174,8 +174,8 @@ export class PoseEngine {
       this.lastTimestamp = nowMs;
 
       if (results && results.landmarks && results.landmarks.length > 0) {
-        // Return first person's landmarks (normalized 0-1)
-        this.lastResults = results.landmarks[0];
+        // Return array of people's landmarks
+        this.lastResults = results.landmarks;
         return this.lastResults;
       }
     } catch (err) {

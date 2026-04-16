@@ -9,6 +9,7 @@ import { PoseEngine } from './detection/pose-engine.js';
 import { MotionAnalyzer } from './detection/motion-analyzer.js';
 import { SoundManager } from './audio/sound-manager.js';
 import { FruitNinjaGame } from './games/fruit-ninja.js';
+import { FighterGame } from './games/fighter.js';
 
 class App {
   constructor() {
@@ -84,6 +85,22 @@ class App {
       });
     }
 
+    const btnFighterAI = document.getElementById('btn-fighter-ai');
+    if (btnFighterAI) {
+      btnFighterAI.addEventListener('click', () => {
+        this.sound.resume();
+        this._startGame('fighter-ai');
+      });
+    }
+
+    const btnFighterP2P = document.getElementById('btn-fighter-p2p');
+    if (btnFighterP2P) {
+      btnFighterP2P.addEventListener('click', () => {
+        this.sound.resume();
+        this._startGame('fighter-p2p');
+      });
+    }
+
     // Game: Pause
     const btnPause = document.getElementById('btn-pause');
     if (btnPause) {
@@ -94,12 +111,31 @@ class App {
       });
     }
 
+    // Game: Home (Back to menu)
+    const btnHome = document.getElementById('btn-home');
+    if (btnHome) {
+      btnHome.addEventListener('click', () => {
+        if (this.currentGame) {
+          this.currentGame.state = 'ended';
+          this.sound.stopBGM();
+          if (typeof this.currentGame.hideHUD === 'function') {
+            this.currentGame.hideHUD();
+          }
+           // Xóa combo/strikes overlay nếu bị kẹt
+          const comboEl = document.getElementById('hud-combo');
+          if (comboEl) comboEl.classList.remove('visible');
+        }
+        this._stopGameLoop();
+        this._showScreen('menu');
+      });
+    }
+
     // Results: Play Again
     const btnPlayAgain = document.getElementById('btn-play-again');
     if (btnPlayAgain) {
       btnPlayAgain.addEventListener('click', () => {
         this.sound.resume();
-        this._startGame('fruit-ninja');
+        this._startGame(this.currentMode || 'fruit-ninja');
       });
     }
 
@@ -129,12 +165,17 @@ class App {
   _startGame(mode) {
     this._showScreen('game');
     this._resizeCanvas();
+    this.currentMode = mode;
 
     // Reset motion analyzer
     this.motionAnalyzer.reset();
 
     if (mode === 'fruit-ninja') {
       this.currentGame = new FruitNinjaGame(this.canvas, this.sound);
+      this.currentGame.onGameEnd = (results) => this._showResults(results);
+      this.currentGame.start();
+    } else if (mode === 'fighter-ai' || mode === 'fighter-p2p') {
+      this.currentGame = new FighterGame(this.canvas, this.sound, mode, this.motionAnalyzer, this.poseEngine.toCanvasCoords.bind(this.poseEngine));
       this.currentGame.onGameEnd = (results) => this._showResults(results);
       this.currentGame.start();
     }
@@ -168,7 +209,7 @@ class App {
 
     // 3. Update & render game
     if (this.currentGame) {
-      this.currentGame.update(slashes, trails, positions);
+      this.currentGame.update(slashes, trails, positions, landmarks);
     }
 
     // Continue loop

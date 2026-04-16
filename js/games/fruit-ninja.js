@@ -9,7 +9,7 @@
 const GAME_DURATION = 300;        // 5 minutes
 const COUNTDOWN_SECONDS = 3;
 const HIT_TOLERANCE = 180;           
-const MAX_ACTIVE_FRUITS = 3;       // Luôn giữ tối đa 3 quả trên màn hình để không bao giờ bị loạn/dày đặc
+const MAX_ACTIVE_FRUITS = 6;       // Tăng lên 6 để đủ lượng quả cho 2 người (chia mâm)
 const COMBO_WINDOW = 2000;         // 2 seconds for combo
 const DIFFICULTY_RAMP_INTERVAL = 25; // seconds
 

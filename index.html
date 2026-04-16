@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/fighter.css">
 </head>
 <body>
 
@@ -54,22 +55,22 @@
           <div class="card-badge">PLAY</div>
         </button>
 
-        <button class="game-card card-locked" disabled>
-          <div class="card-icon">🗺️🔤</div>
+        <button class="game-card card-fighter-ai" id="btn-fighter-ai" data-game="fighter-ai">
+          <div class="card-icon">🤖🥊</div>
           <div class="card-info">
-            <h3>Treasure Hunt ABC</h3>
-            <p>Coming Soon / Sắp ra mắt</p>
+            <h3>Fighter vs AI</h3>
+            <p>Fight the Robot! / Đánh Robot</p>
           </div>
-          <div class="card-badge">🔒</div>
+          <div class="card-badge">PLAY</div>
         </button>
 
-        <button class="game-card card-locked" disabled>
-          <div class="card-icon">🏃‍♂️🤖</div>
+        <button class="game-card card-fighter-p2p" id="btn-fighter-p2p" data-game="fighter-p2p">
+          <div class="card-icon">🤜🤛</div>
           <div class="card-info">
-            <h3>Race Runner</h3>
-            <p>Coming Soon / Sắp ra mắt</p>
+            <h3>Fighter 2 Player</h3>
+            <p>Vs Friend / Đánh với bạn</p>
           </div>
-          <div class="card-badge">🔒</div>
+          <div class="card-badge">PLAY</div>
         </button>
       </div>
     </div>
@@ -103,8 +104,11 @@
       </div>
     </div>
 
-    <!-- Pause/Back button -->
-    <button id="btn-pause" class="btn-circle" title="Pause">⏸️</button>
+    <!-- Game Controls -->
+    <div class="game-controls">
+      <button id="btn-home" class="btn-circle" title="Back to Menu">🏠</button>
+      <button id="btn-pause" class="btn-circle" title="Pause">⏸️</button>
+    </div>
   </div>
 
   <!-- ============ RESULTS SCREEN ============ -->

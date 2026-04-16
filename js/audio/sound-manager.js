@@ -159,6 +159,65 @@ export class SoundManager {
   }
 
   /**
+   * Play a heavy explosion / superhero punch impact
+   */
+  playExplosion() {
+    if (!this._initialized || this.isMuted) return;
+    const now = this.ctx.currentTime;
+    const duration = 0.6; // Đục trúng vang lâu một xíu
+
+    // 1. Phá băng (Nhiễu trắng / Looping white noise) dùng làm chấn động nổ
+    const noiseNode = this.ctx.createBufferSource();
+    noiseNode.buffer = this.noiseBuffer;
+    noiseNode.loop = true; // Loop để đủ thời gian 0.6s vì buffer gốc chỉ có 0.15s
+    
+    const noiseFilter = this.ctx.createBiquadFilter();
+    noiseFilter.type = 'lowpass';
+    noiseFilter.frequency.setValueAtTime(1500, now);
+    noiseFilter.frequency.exponentialRampToValueAtTime(50, now + duration); // Rút tần số trầm xuống từ từ
+    
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(2.0, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    
+    noiseNode.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(this.masterGain);
+    noiseNode.start(now);
+    noiseNode.stop(now + duration);
+
+    // 2. Tiếng Bụp nặng trịch (Bass Drop)
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine'; // Âm sụp trầm
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + duration * 0.8);
+    
+    const oscGain = this.ctx.createGain();
+    oscGain.gain.setValueAtTime(2.0, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    
+    osc.connect(oscGain);
+    oscGain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + duration);
+    
+    // 3. Tiếng chát khô gắt (Crisp Transient đầu cú đấm)
+    const transient = this.ctx.createOscillator();
+    transient.type = 'square';
+    transient.frequency.setValueAtTime(400, now);
+    transient.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+    
+    const transGain = this.ctx.createGain();
+    transGain.gain.setValueAtTime(1.5, now);
+    transGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+    
+    transient.connect(transGain);
+    transGain.connect(this.masterGain);
+    transient.start(now);
+    transient.stop(now + 0.1);
+  }
+
+  /**
    * Play score/coin collection sound
    */
   playScore() {
