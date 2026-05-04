@@ -1,245 +1,265 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KidGame AR Arcade - Màn Hình Chính</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <title>KidGame Arcade - Select Your Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --card-border: rgba(255, 255, 255, 0.1);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --accent-1: #3b82f6;
-            --accent-2: #8b5cf6;
-            --accent-3: #ec4899;
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Outfit', sans-serif;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
+            background-color: #0f172a;
+            color: #f8fafc;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* Animated Background Orbs */
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: -1;
-            animation: float 20s infinite ease-in-out alternate;
-        }
-        .orb-1 {
-            width: 400px;
-            height: 400px;
-            background: rgba(59, 130, 246, 0.3);
-            top: -10%;
-            left: -10%;
-            animation-delay: 0s;
-        }
-        .orb-2 {
-            width: 500px;
-            height: 500px;
-            background: rgba(139, 92, 246, 0.2);
-            bottom: -20%;
-            right: -10%;
-            animation-delay: -5s;
-        }
-        .orb-3 {
-            width: 300px;
-            height: 300px;
-            background: rgba(236, 72, 153, 0.2);
-            top: 40%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -10s;
-        }
-
-        @keyframes float {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(50px, 50px) scale(1.1); }
-            100% { transform: translate(-50px, 20px) scale(0.9); }
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
+            overflow-x: hidden;
         }
 
         header {
-            text-align: center;
+            margin-top: 4rem;
             margin-bottom: 3rem;
-            z-index: 10;
+            text-align: center;
+            animation: fadeInDown 1s ease-out;
         }
 
         h1 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 4rem;
+            font-size: 3.5rem;
             font-weight: 800;
-            background: linear-gradient(to right, #60a5fa, #c084fc, #f472b6);
+            background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            letter-spacing: -1px;
+            margin-bottom: 1rem;
+            text-shadow: 0 10px 30px rgba(192, 132, 252, 0.2);
         }
 
         p.subtitle {
             font-size: 1.2rem;
-            color: var(--text-secondary);
+            color: #94a3b8;
             font-weight: 300;
         }
 
-        /* Arcade Game Grid */
         .game-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            width: 90%;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2.5rem;
+            width: 100%;
             max-width: 1200px;
-            z-index: 10;
+            padding: 0 2rem;
+            margin-bottom: 4rem;
         }
 
-        /* Glassmorphism Card */
         .game-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 24px;
-            padding: 2rem;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
             text-decoration: none;
-            color: white;
+            color: inherit;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: fadeInUp 0.8s ease-out backwards;
         }
 
-        .game-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 50%; height: 100%;
-            background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
-            transform: skewX(-20deg);
-            transition: 0.5s;
-        }
+        .game-card:nth-child(1) { animation-delay: 0.1s; }
+        .game-card:nth-child(2) { animation-delay: 0.2s; }
+        .game-card:nth-child(3) { animation-delay: 0.3s; }
 
         .game-card:hover {
             transform: translateY(-10px) scale(1.02);
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 
+                        0 0 20px rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.3);
         }
 
-        .game-card:hover::before {
-            left: 200%;
+        .card-image {
+            width: 100%;
+            height: 220px;
+            overflow: hidden;
+            position: relative;
         }
 
-        .card-icon {
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-            filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
-            transition: transform 0.3s;
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
         }
 
-        .game-card:hover .card-icon {
-            transform: scale(1.1) rotate(5deg);
+        .game-card:hover .card-image img {
+            transform: scale(1.1);
         }
 
-        .card-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
+        .card-image::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(to top, rgba(30, 41, 59, 1), transparent);
         }
 
-        .card-desc {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            margin-bottom: 1.5rem;
+        .card-content {
+            padding: 2rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
 
-        .badge {
-            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-            padding: 6px 16px;
+        .tag {
+            align-self: flex-start;
+            padding: 0.4rem 1rem;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 600;
-            letter-spacing: 1px;
             text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
         }
 
-        .badge.coming-soon {
-            background: linear-gradient(135deg, #475569, #334155);
-            color: #cbd5e1;
-            box-shadow: none;
+        .tag.ar {
+            background: rgba(236, 72, 153, 0.1);
+            color: #f472b6;
+            border: 1px solid rgba(236, 72, 153, 0.2);
         }
 
-        /* Disable link for coming soon */
-        .disabled-link {
-            pointer-events: none;
-            opacity: 0.7;
+        .tag.coming-soon {
+            background: rgba(148, 163, 184, 0.1);
+            color: #94a3b8;
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
 
-        @media (max-width: 768px) {
-            h1 { font-size: 2.5rem; }
-            .game-grid { grid-template-columns: 1fr; }
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+        }
+
+        .card-desc {
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .play-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .play-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .game-card:hover .play-btn::before {
+            left: 100%;
+        }
+
+        .play-btn.disabled {
+            background: rgba(71, 85, 105, 0.5);
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Ambient Background -->
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-
     <header>
         <h1>KidGame Arcade</h1>
-        <p class="subtitle">Vũ trụ thực tế ảo AR ngay trong phòng khách của bạn</p>
+        <p class="subtitle">Experience the next generation of interactive gaming</p>
     </header>
 
     <div class="game-grid">
-        <!-- Street Fighter -->
-        <a href="./StreetFighter/index.html" class="game-card">
-            <div class="card-icon">🥋</div>
-            <h2 class="card-title">AR Fighter</h2>
-            <p class="card-desc">Hóa thân thành võ sĩ thực thụ. Tung những cú đấm thép và chưởng Hadouken ngoài đời thực để hạ gục đối thủ trên màn hình.</p>
-            <div class="badge">Chơi Ngay</div>
+        <!-- Street Fighter AR -->
+        <a href="StreetFighter/index.html" class="game-card">
+            <div class="card-image">
+                <img src="img/robot_fighter.png" alt="Street Fighter AR">
+            </div>
+            <div class="card-content">
+                <span class="tag ar">AR Camera Mode</span>
+                <h2 class="card-title">Street Fighter AR</h2>
+                <p class="card-desc">Use your webcam to perform real-life martial arts moves! Slice your opponents like Fruit Ninja and charge up your Hadouken energy by bringing your wrists together.</p>
+                <div class="play-btn">Play Now</div>
+            </div>
         </a>
 
-        <!-- Fruit Ninja -->
-        <a href="#" class="game-card disabled-link">
-            <div class="card-icon">🍉</div>
-            <h2 class="card-title">Chém Hoa Quả</h2>
-            <p class="card-desc">Biến đôi tay thành thanh kiếm Katana sắc bén. Vung tay chém đôi mọi loại trái cây bay qua màn hình bằng công nghệ AI.</p>
-            <div class="badge coming-soon">Sắp Ra Mắt</div>
+        <!-- Fruit Ninja AR -->
+        <a href="FruitNinja/index.html" class="game-card">
+            <div class="card-image">
+                <img src="img/boss_monster.png" alt="Fruit Ninja AR" style="filter: hue-rotate(90deg);">
+            </div>
+            <div class="card-content">
+                <span class="tag ar">AR Camera Mode</span>
+                <h2 class="card-title">Fruit Ninja AR</h2>
+                <p class="card-desc">Biến đôi tay của bạn thành thanh katana sắc bén. Chém đứt đôi mọi loại trái cây bay qua màn hình bằng công nghệ nhận diện chuyển động tay AI siêu tốc.</p>
+                <div class="play-btn">Play Now</div>
+            </div>
         </a>
 
-        <!-- Space Shooter -->
-        <a href="#" class="game-card disabled-link">
-            <div class="card-icon">🚀</div>
-            <h2 class="card-title">Chiến Binh Không Gian</h2>
-            <p class="card-desc">Nghiêng người để né đạn, xòe bàn tay để bắn laser. Bảo vệ trái đất khỏi phi đội quái vật ngoài hành tinh khát máu.</p>
-            <div class="badge coming-soon">Sắp Ra Mắt</div>
+        <!-- Robot Wars (Placeholder) -->
+        <a href="#" class="game-card" style="cursor: default;">
+            <div class="card-image">
+                <img src="img/robot.png" alt="Robot Wars">
+            </div>
+            <div class="card-content">
+                <span class="tag coming-soon">Coming Soon</span>
+                <h2 class="card-title">Mecha Wars</h2>
+                <p class="card-desc">Build, customize, and pilot giant mechas. Fight against AI or your friends in local multiplayer.</p>
+                <div class="play-btn disabled">Locked</div>
+            </div>
         </a>
     </div>
 

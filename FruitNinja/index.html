@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruit Ninja AR</title>
+    <!-- Mediapipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background-color: #111; 
+            color: white; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh;
+        }
+        #gameCanvas {
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            border: 2px solid #333;
+            border-radius: 8px;
+            /* Scale to fit screen while maintaining 16:9 ratio */
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 10;
+        }
+        #score { color: #facc15; }
+        #lives { color: #ef4444; margin-top: 5px; }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 10px #3b82f6;
+            pointer-events: none;
+        }
+        #backBtn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            backdrop-filter: blur(4px);
+            transition: background 0.3s;
+            z-index: 20;
+        }
+        #backBtn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <a id="backBtn" href="../index.html">← Trở về Hub</a>
+    <div id="ui">
+        <div id="score">Điểm: 0</div>
+        <div id="lives">Mạng: 🍎🍎🍎</div>
+    </div>
+    <div id="loading">Đang tải Camera & AI... Hãy đứng cách xa 1 mét!</div>
+    
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script src="app.js"></script>
+</body>
+</html>
