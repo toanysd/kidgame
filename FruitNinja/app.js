@@ -97,40 +97,66 @@ if (typeof CUSTOM_LIBRARY !== 'undefined') {
     CUSTOM_LIBRARY.forEach(item => {
         const img = new Image();
         img.src = item.src;
+        let audioObj = null;
+        if (item.audio) {
+            audioObj = new Audio(item.audio);
+        }
         ALL_SPAWN_TYPES.push({
             img: img,
             name: item.name,
+            audio: audioObj,
             color: '#facc15',
             size: item.size || 50
         });
     });
 }
 
-// Handle file upload
+// Handle file/folder upload
 const imageUpload = document.getElementById('imageUpload');
 const uploadStatus = document.getElementById('uploadStatus');
 
 if (imageUpload) {
     imageUpload.addEventListener('change', (e) => {
         const files = e.target.files;
-        let count = 0;
+        let fileDict = {};
+
+        // Group files by base name
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
+            let name = file.name.split('.').slice(0, -1).join('.');
+            
+            if (!fileDict[name]) fileDict[name] = {};
+            
             if (file.type.startsWith('image/')) {
-                const url = URL.createObjectURL(file);
+                fileDict[name].image = URL.createObjectURL(file);
+            } else if (file.type.startsWith('audio/') || file.name.endsWith('.mp3') || file.name.endsWith('.wav')) {
+                fileDict[name].audio = URL.createObjectURL(file);
+            }
+        }
+
+        // Push to game library
+        let count = 0;
+        for (const [name, data] of Object.entries(fileDict)) {
+            if (data.image) {
                 const img = new Image();
-                img.src = url;
-                let name = file.name.split('.').slice(0, -1).join('.');
+                img.src = data.image;
+                
+                let audioObj = null;
+                if (data.audio) {
+                    audioObj = new Audio(data.audio);
+                }
+
                 ALL_SPAWN_TYPES.push({
                     img: img,
                     name: name,
+                    audio: audioObj,
                     color: '#facc15',
                     size: 60
                 });
                 count++;
             }
         }
-        uploadStatus.innerText = `Đã thêm ${count} ảnh vào game! (Sẽ xuất hiện ngẫu nhiên)`;
+        uploadStatus.innerText = `Đã tải ${count} ảnh (kèm âm thanh nếu có)!`;
     });
 }
 
@@ -348,7 +374,13 @@ function loop(timestamp) {
                         
                         score += 10;
                         updateUI();
-                        speakText(f.type.name);
+                        
+                        if (f.type.audio) {
+                            let sound = f.type.audio.cloneNode();
+                            sound.play().catch(e => console.log(e));
+                        } else {
+                            speakText(f.type.name);
+                        }
 
                         // Spawn Halves
                         fruits.push(new Spawnable(true, f.type, f.x, f.y, f.vx - 3, f.vy, -1));
