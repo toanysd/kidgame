@@ -6162,7 +6162,7 @@
       this.sceneStarted = true;
     };
     constructor() {
-      this.startScene(BattleScene);
+      this.startScene(StartScene);
     }
     updateScenes = () => {
       this.scene.draw(this.context);
