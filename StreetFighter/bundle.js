@@ -5551,20 +5551,27 @@
     brightness = 0;
     contrast = 3;
     sceneEnded = false;
-    endStartScene = (event) => {
-      if (event.clientX < window.innerWidth / 2) {
-        window.GAME_MODE = "1P";
-      } else {
-        window.GAME_MODE = "2P";
-      }
+    endStartScene = (mode) => {
+      window.GAME_MODE = mode;
+      const modeSelection = document.getElementById("modeSelection");
+      if (modeSelection)
+        modeSelection.style.display = "none";
       this.changeScene(BattleScene);
-      window.removeEventListener("click", this.endStartScene);
     };
     constructor(changeScene) {
       this.changeScene = changeScene;
       window.GAME_MODE = "1P";
-      window.removeEventListener("click", this.endStartScene);
-      window.addEventListener("click", this.endStartScene);
+      const modeSelection = document.getElementById("modeSelection");
+      if (modeSelection)
+        modeSelection.style.display = "flex";
+      const btn1P = document.getElementById("btn1P");
+      const btn2P = document.getElementById("btn2P");
+      if (btn1P) {
+        btn1P.onclick = () => this.endStartScene("1P");
+      }
+      if (btn2P) {
+        btn2P.onclick = () => this.endStartScene("2P");
+      }
     }
     updateLogo = (time) => {
       if (this.flashTimer > time.previous)
@@ -5581,12 +5588,9 @@
     };
     drawText = (context) => {
       context.fillStyle = "white";
-      context.font = "10px Arial";
+      context.font = "12px Arial";
       context.textAlign = "center";
-      context.fillStyle = "cyan";
-      context.fillText("<- 1 PLAYER (vs CPU)", SCENE_WIDTH / 4, 150);
-      context.fillStyle = "magenta";
-      context.fillText("2 PLAYERS (vs Friend) ->", SCENE_WIDTH * 0.75, 150);
+      context.fillText("CHOOSE GAME MODE BELOW", SCENE_WIDTH / 2, 180);
       context.textAlign = "left";
     };
     drawLogo = (context) => {
