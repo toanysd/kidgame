@@ -90,6 +90,50 @@ const SPAWN_TYPES = [
     { emoji: '🟢', name: 'Green', color: '#22c55e', size: 35 }
 ];
 
+let ALL_SPAWN_TYPES = [...SPAWN_TYPES];
+
+// Load static library if exists
+if (typeof CUSTOM_LIBRARY !== 'undefined') {
+    CUSTOM_LIBRARY.forEach(item => {
+        const img = new Image();
+        img.src = item.src;
+        ALL_SPAWN_TYPES.push({
+            img: img,
+            name: item.name,
+            color: '#facc15',
+            size: item.size || 50
+        });
+    });
+}
+
+// Handle file upload
+const imageUpload = document.getElementById('imageUpload');
+const uploadStatus = document.getElementById('uploadStatus');
+
+if (imageUpload) {
+    imageUpload.addEventListener('change', (e) => {
+        const files = e.target.files;
+        let count = 0;
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.type.startsWith('image/')) {
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.src = url;
+                let name = file.name.split('.').slice(0, -1).join('.');
+                ALL_SPAWN_TYPES.push({
+                    img: img,
+                    name: name,
+                    color: '#facc15',
+                    size: 60
+                });
+                count++;
+            }
+        }
+        uploadStatus.innerText = `Đã thêm ${count} ảnh vào game! (Sẽ xuất hiện ngẫu nhiên)`;
+    });
+}
+
 class Particle {
     constructor(x, y, color) {
         this.x = x;
@@ -120,7 +164,7 @@ class Spawnable {
         this.isHalf = isHalf;
         this.halfSide = halfSide; // 1 for right, -1 for left
         if (!isHalf) {
-            this.type = SPAWN_TYPES[Math.floor(Math.random() * SPAWN_TYPES.length)];
+            this.type = ALL_SPAWN_TYPES[Math.floor(Math.random() * ALL_SPAWN_TYPES.length)];
             this.radius = this.type.size;
             this.x = Math.random() * (WIDTH - 150) + 75;
             this.y = HEIGHT + this.radius;
@@ -171,11 +215,21 @@ class Spawnable {
             ctx.clip();
         }
 
-        // Draw Emoji
-        ctx.font = `${this.radius * 1.5}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(this.type.emoji, 0, 0);
+        if (this.type.img) {
+            // Draw Custom Image
+            const r = this.radius;
+            // Optionally make it circular
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(this.type.img, -r, -r, r * 2, r * 2);
+        } else {
+            // Draw Emoji
+            ctx.font = `${this.radius * 1.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(this.type.emoji, 0, 0);
+        }
 
         ctx.restore();
 
@@ -341,8 +395,9 @@ function loop(timestamp) {
     }
 }
 
+const startScreen = document.getElementById('startScreen');
 startBtn.addEventListener('click', () => {
-    startBtn.style.display = 'none';
+    startScreen.style.display = 'none';
     uiEl.style.display = 'block';
     loadingEl.style.display = 'block';
     

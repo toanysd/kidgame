@@ -52,11 +52,20 @@
             pointer-events: none;
             display: none;
         }
-        #startBtn {
+        #startScreen {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            background: rgba(0,0,0,0.7);
+        }
+        #startBtn {
             padding: 20px 40px;
             font-size: 30px;
             background: linear-gradient(135deg, #22c55e, #16a34a);
@@ -65,8 +74,33 @@
             border-radius: 20px;
             cursor: pointer;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-            z-index: 30;
             font-family: 'Outfit', sans-serif;
+            font-weight: bold;
+            margin-bottom: 30px;
+            transition: transform 0.2s;
+        }
+        #startBtn:hover {
+            transform: scale(1.05);
+        }
+        .upload-btn {
+            padding: 15px 30px;
+            font-size: 20px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: background 0.2s;
+        }
+        .upload-btn:hover {
+            background: #2563eb;
+        }
+        #uploadStatus {
+            margin-top: 15px;
+            font-size: 18px;
+            color: #facc15;
             font-weight: bold;
         }
         #backBtn {
@@ -95,11 +129,21 @@
         <div id="score">Điểm: 0</div>
         <div id="time">Thời gian: 03:00</div>
     </div>
-    <button id="startBtn">BẮT ĐẦU CHƠI</button>
+    
+    <div id="startScreen">
+        <button id="startBtn">BẮT ĐẦU CHƠI</button>
+        <div>
+            <label for="imageUpload" class="upload-btn">📁 Tải lên ảnh của bạn</label>
+            <input type="file" id="imageUpload" multiple accept="image/*" style="display: none;">
+        </div>
+        <div id="uploadStatus">Bạn có thể chọn nhiều ảnh cùng lúc!</div>
+    </div>
+
     <div id="loading">Đang tải Camera & AI... Hãy lùi lại 1 mét!</div>
     
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 
+    <script src="library.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
