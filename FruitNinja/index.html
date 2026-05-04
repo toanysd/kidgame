@@ -39,7 +39,7 @@
             z-index: 10;
         }
         #score { color: #facc15; }
-        #lives { color: #ef4444; margin-top: 5px; }
+        #time { color: #3b82f6; margin-top: 5px; }
         #loading {
             position: absolute;
             top: 50%;
@@ -50,6 +50,24 @@
             color: white;
             text-shadow: 0 0 10px #3b82f6;
             pointer-events: none;
+            display: none;
+        }
+        #startBtn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            font-size: 30px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            z-index: 30;
+            font-family: 'Outfit', sans-serif;
+            font-weight: bold;
         }
         #backBtn {
             position: absolute;
@@ -73,11 +91,12 @@
 </head>
 <body>
     <a id="backBtn" href="../index.html">← Trở về Hub</a>
-    <div id="ui">
+    <div id="ui" style="display: none;">
         <div id="score">Điểm: 0</div>
-        <div id="lives">Mạng: 🍎🍎🍎</div>
+        <div id="time">Thời gian: 03:00</div>
     </div>
-    <div id="loading">Đang tải Camera & AI... Hãy đứng cách xa 1 mét!</div>
+    <button id="startBtn">BẮT ĐẦU CHƠI</button>
+    <div id="loading">Đang tải Camera & AI... Hãy lùi lại 1 mét!</div>
     
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 
