@@ -11,6 +11,8 @@ export class AIBot {
     }
 
     update(time) {
+        if (window.GAME_MODE === '2P') return;
+
         if (!this.scene || !this.scene.fighters) return;
         const me = this.scene.fighters[this.fighterIndex];
         const opponent = this.scene.fighters[1 - this.fighterIndex];

@@ -5551,12 +5551,18 @@
     brightness = 0;
     contrast = 3;
     sceneEnded = false;
-    endStartScene = () => {
+    endStartScene = (event) => {
+      if (event.clientX < window.innerWidth / 2) {
+        window.GAME_MODE = "1P";
+      } else {
+        window.GAME_MODE = "2P";
+      }
       this.changeScene(BattleScene);
       window.removeEventListener("click", this.endStartScene);
     };
     constructor(changeScene) {
       this.changeScene = changeScene;
+      window.GAME_MODE = "1P";
       window.removeEventListener("click", this.endStartScene);
       window.addEventListener("click", this.endStartScene);
     }
@@ -5575,14 +5581,13 @@
     };
     drawText = (context) => {
       context.fillStyle = "white";
-      context.font = "12px Arial";
-      const textWidth = context.measureText(this.text).width;
-      for (let i = 0; i < this.repeatTime; i++) {
-        context.fillText(this.text, this.position + i * (textWidth + 30), 18);
-      }
-      if (this.position < (-textWidth + -30) * this.repeatTime) {
-        this.position = SCENE_WIDTH;
-      }
+      context.font = "10px Arial";
+      context.textAlign = "center";
+      context.fillStyle = "cyan";
+      context.fillText("<- 1 PLAYER (vs CPU)", SCENE_WIDTH / 4, 150);
+      context.fillStyle = "magenta";
+      context.fillText("2 PLAYERS (vs Friend) ->", SCENE_WIDTH * 0.75, 150);
+      context.textAlign = "left";
     };
     drawLogo = (context) => {
       if (this.logoFlash) {
@@ -5851,6 +5856,8 @@
       this.decisionTimer = 0;
     }
     update(time) {
+      if (window.GAME_MODE === "2P")
+        return;
       if (!this.scene || !this.scene.fighters)
         return;
       const me = this.scene.fighters[this.fighterIndex];
