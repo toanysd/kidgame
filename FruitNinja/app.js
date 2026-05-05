@@ -19,6 +19,7 @@ let particles = [];
 let bladeTrail = []; 
 let lastTimeUpdate = 0;
 let currentThemeKey = null; // Store current theme for replay
+let isCameraRunning = false;
 
 // --- TTS Function ---
 function speakText(text) {
@@ -98,7 +99,11 @@ function startGame() {
 
     gameStarted = true;
     lastTimeUpdate = performance.now();
-    camera.start();
+    
+    if (!isCameraRunning) {
+        camera.start();
+        isCameraRunning = true;
+    }
     
     // Only call requestAnimationFrame if it's not already running
     if (!window.gameLoopRunning) {
