@@ -5895,24 +5895,26 @@
           inputs.up = true;
       } else {
         const attackChance = Math.random();
-        if (attackChance < 0.2)
+        if (attackChance < 0.1)
           inputs.lightPunch = true;
-        else if (attackChance < 0.4)
+        else if (attackChance < 0.2)
           inputs.mediumPunch = true;
-        else if (attackChance < 0.6)
+        else if (attackChance < 0.3)
           inputs.heavyPunch = true;
-        else if (attackChance < 0.8)
+        else if (attackChance < 0.4)
           inputs.heavyKick = true;
         else {
-          if (me.position.x < opponent.position.x)
-            inputs.left = true;
-          else
-            inputs.right = true;
-          inputs.down = Math.random() < 0.5;
+          if (Math.random() < 0.5) {
+            if (me.position.x < opponent.position.x)
+              inputs.left = true;
+            else
+              inputs.right = true;
+          }
+          inputs.down = Math.random() < 0.3;
         }
       }
       window.AI_OPPONENT_INPUT = inputs;
-      this.decisionTimer = time.previous + 150 + Math.random() * 400;
+      this.decisionTimer = time.previous + 600 + Math.random() * 800;
     }
   };
 

@@ -11,13 +11,14 @@ const HEIGHT = canvas.height;
 
 // --- Game State ---
 let score = 0;
-let timeRemaining = 180; // 3 minutes = 180 seconds
+let timeRemaining = 300; // 5 minutes = 300 seconds
 let gameOver = false;
 let gameStarted = false;
 let fruits = [];
 let particles = [];
 let bladeTrail = []; 
 let lastTimeUpdate = 0;
+let currentThemeKey = null; // Store current theme for replay
 
 // --- TTS Function ---
 function speakText(text) {
@@ -75,41 +76,78 @@ const camera = new Camera(videoElement, {
     height: 480
 });
 
-// --- Game Logic ---
-const SPAWN_TYPES = [
-    { emoji: '🍎', name: 'Apple', color: '#ef4444', size: 40 },
-    { emoji: '🍉', name: 'Watermelon', color: '#22c55e', size: 45 },
-    { emoji: '🤖', name: 'Robot', color: '#6b7280', size: 50 },
-    { emoji: '🚆', name: 'Train', color: '#3b82f6', size: 50 },
-    { emoji: '🚅', name: 'Shinkansen', color: '#f8fafc', size: 55 },
-    { emoji: '🚧', name: 'Barrier', color: '#eab308', size: 40 },
-    { emoji: '🦸‍♂️', name: 'Hero', color: '#ef4444', size: 45 }, // Anpanman representation
-    { emoji: '🔴', name: 'Red', color: '#ef4444', size: 35 },
-    { emoji: '🔵', name: 'Blue', color: '#3b82f6', size: 35 },
-    { emoji: '🟡', name: 'Yellow', color: '#eab308', size: 35 },
-    { emoji: '🟢', name: 'Green', color: '#22c55e', size: 35 }
-];
+let ALL_SPAWN_TYPES = [];
 
-let ALL_SPAWN_TYPES = [...SPAWN_TYPES];
+function startGame() {
+    startScreen.style.display = 'none';
+    gameOverScreen.style.display = 'none';
+    uiEl.style.display = 'block';
+    loadingEl.style.display = 'block';
+    
+    // Init speech synthesis with dummy text to unlock it in browser
+    speakText("Let's play!");
 
-// Load static library if exists
-if (typeof CUSTOM_LIBRARY !== 'undefined') {
-    CUSTOM_LIBRARY.forEach(item => {
-        const img = new Image();
-        img.src = item.src;
+    // Reset game state
+    score = 0;
+    timeRemaining = 300;
+    gameOver = false;
+    fruits = [];
+    particles = [];
+    bladeTrail = [];
+    updateUI();
+
+    gameStarted = true;
+    lastTimeUpdate = performance.now();
+    camera.start();
+    
+    // Only call requestAnimationFrame if it's not already running
+    if (!window.gameLoopRunning) {
+        window.gameLoopRunning = true;
+        requestAnimationFrame(loop);
+    }
+}
+
+// Function to process a list of theme items
+const loadThemeItems = (items) => {
+    items.forEach(item => {
+        let imgObj = null;
+        if (item.src) {
+            imgObj = new Image();
+            imgObj.src = item.src;
+        }
         let audioObj = null;
         if (item.audio) {
             audioObj = new Audio(item.audio);
         }
+        
         ALL_SPAWN_TYPES.push({
-            img: img,
+            emoji: item.emoji,
+            img: imgObj,
             name: item.name,
             audio: audioObj,
-            color: '#facc15',
+            color: item.color || '#facc15',
             size: item.size || 50
         });
     });
-}
+};
+
+// Handle Theme Cards
+document.querySelectorAll('.theme-card').forEach(card => {
+    card.addEventListener('click', () => {
+        const theme = card.getAttribute('data-theme');
+        ALL_SPAWN_TYPES = []; // Reset
+        
+        if (theme === 'mixed') {
+            for (let key in THEMES) {
+                loadThemeItems(THEMES[key]);
+            }
+        } else if (THEMES[theme]) {
+            loadThemeItems(THEMES[theme]);
+        }
+        
+        startGame();
+    });
+});
 
 // Handle file/folder upload
 const imageUpload = document.getElementById('imageUpload');
@@ -135,6 +173,7 @@ if (imageUpload) {
         }
 
         // Push to game library
+        ALL_SPAWN_TYPES = []; // Reset
         let count = 0;
         for (const [name, data] of Object.entries(fileDict)) {
             if (data.image) {
@@ -147,6 +186,7 @@ if (imageUpload) {
                 }
 
                 ALL_SPAWN_TYPES.push({
+                    emoji: '?',
                     img: img,
                     name: name,
                     audio: audioObj,
@@ -156,7 +196,12 @@ if (imageUpload) {
                 count++;
             }
         }
-        uploadStatus.innerText = `Đã tải ${count} ảnh (kèm âm thanh nếu có)!`;
+        
+        if (count > 0) {
+            startGame();
+        } else {
+            uploadStatus.innerText = "Không tìm thấy ảnh hợp lệ trong thư mục!";
+        }
     });
 }
 
@@ -319,6 +364,8 @@ function loop(timestamp) {
         lastTimeUpdate = timestamp;
         if (timeRemaining <= 0) {
             gameOver = true;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            document.getElementById('finalScoreText').innerText = `Bé đạt được: ${score} điểm!`;
         }
     }
 
@@ -338,12 +385,7 @@ function loop(timestamp) {
     }
 
     if (gameOver) {
-        ctx.fillStyle = 'white';
-        ctx.font = '50px Outfit, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('HẾT GIỜ!', WIDTH/2, HEIGHT/2);
-        ctx.font = '30px Outfit, sans-serif';
-        ctx.fillText(`Tuyệt vời! Bé đạt được: ${score} điểm`, WIDTH/2, HEIGHT/2 + 60);
+        // Just draw the background dimming if game over, the HTML overlay handles the rest
         return;
     }
 
@@ -428,16 +470,17 @@ function loop(timestamp) {
 }
 
 const startScreen = document.getElementById('startScreen');
-startBtn.addEventListener('click', () => {
-    startScreen.style.display = 'none';
-    uiEl.style.display = 'block';
-    loadingEl.style.display = 'block';
-    
-    // Init speech synthesis with dummy text to unlock it in browser
-    speakText("Let's play!");
+const gameOverScreen = document.getElementById('gameOverScreen');
+const replayBtn = document.getElementById('replayBtn');
+const menuBtn = document.getElementById('menuBtn');
 
-    gameStarted = true;
-    lastTimeUpdate = performance.now();
-    camera.start();
-    requestAnimationFrame(loop);
+replayBtn.addEventListener('click', () => {
+    startGame();
+});
+
+menuBtn.addEventListener('click', () => {
+    gameOverScreen.style.display = 'none';
+    uiEl.style.display = 'none';
+    startScreen.style.display = 'flex';
+    gameStarted = false;
 });
