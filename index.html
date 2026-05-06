@@ -539,14 +539,7 @@
             gameContainer.style.display = 'block';
             closeBtn.style.display = 'block';
             
-            // Check if iframe already exists for this game to avoid re-asking camera
-            let existingIframe = document.getElementById('frame_' + url);
-            if (existingIframe) {
-                existingIframe.style.display = 'block';
-                existingIframe.contentWindow.postMessage('reset_game_ui', '*');
-                activeIframe = existingIframe;
-                return;
-            }
+            // We no longer reuse iframes. They are destroyed on close to ensure a clean session.
 
             // Create new iframe
             const iframe = document.createElement('iframe');
@@ -561,7 +554,9 @@
             gameContainer.style.display = 'none';
             closeBtn.style.display = 'none';
             if (activeIframe) {
-                activeIframe.style.display = 'none'; // We just hide it! Camera keeps running in background.
+                // Destroy the iframe completely to end the session per user request
+                activeIframe.remove();
+                activeIframe = null;
             }
         }
 

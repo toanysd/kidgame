@@ -1,6 +1,7 @@
 import { FRAME_TIME } from './game.js';
 
-export const BATTLE_TIME = 99;
+const savedTime = localStorage.getItem('kidgame_time_limit');
+export const BATTLE_TIME = savedTime === '999' ? 99 : (parseInt(savedTime) * 60 || 99);
 
 export const TIME_DELAY = 120 * FRAME_TIME;
 export const TIME_FLASH_DELAY = 3 * FRAME_TIME;

@@ -769,6 +769,8 @@
 
   // src/engine/SoundHandler.js
   var playSound = (sound, volume = GLOBAL_VOLUME) => {
+    if (localStorage.getItem("kidgame_sfx") === "off")
+      return;
     sound.volume = volume;
     if (!sound.paused && sound.currentTime > 0 && !sound.ended && sound.readyState > sound.HAVE_CURRENT_DATA) {
       sound.currentTime = 0;
@@ -810,7 +812,8 @@
   };
 
   // src/constants/battle.js
-  var BATTLE_TIME = 99;
+  var savedTime = localStorage.getItem("kidgame_time_limit");
+  var BATTLE_TIME = savedTime === "999" ? 99 : parseInt(savedTime) * 60 || 99;
   var TIME_DELAY = 120 * FRAME_TIME;
   var TIME_FLASH_DELAY = 3 * FRAME_TIME;
   var TIME_FRAME_KEYS = ["time", "time-flash"];
@@ -5106,16 +5109,30 @@
       );
     }
     drawTime(context) {
+      if (localStorage.getItem("kidgame_time_limit") === "999") {
+        const timeFrame2 = TIME_FRAME_KEYS[Number(this.useFlashFrames)];
+        this.drawFrame(context, `${timeFrame2}-9`, 178, 33);
+        this.drawFrame(context, `${timeFrame2}-9`, 194, 33);
+        return;
+      }
       const timeString = String(Math.max(this.time, 0)).padStart(2, "0");
       const timeFrame = TIME_FRAME_KEYS[Number(this.useFlashFrames)];
-      this.drawFrame(context, `${timeFrame}-${timeString.charAt(0)}`, 178, 33);
-      this.drawFrame(context, `${timeFrame}-${timeString.charAt(1)}`, 194, 33);
+      if (timeString.length === 3) {
+        this.drawFrame(context, `${timeFrame}-${timeString.charAt(0)}`, 172, 33);
+        this.drawFrame(context, `${timeFrame}-${timeString.charAt(1)}`, 186, 33);
+        this.drawFrame(context, `${timeFrame}-${timeString.charAt(2)}`, 200, 33);
+      } else {
+        this.drawFrame(context, `${timeFrame}-${timeString.charAt(0)}`, 178, 33);
+        this.drawFrame(context, `${timeFrame}-${timeString.charAt(1)}`, 194, 33);
+      }
     }
     drawNames(context) {
       this.drawFrame(context, this.nameTags[0], 32, 33);
       this.drawFrame(context, this.nameTags[1], 322, 33);
     }
     updateTime(time) {
+      if (localStorage.getItem("kidgame_time_limit") === "999")
+        return;
       if (time.previous > this.timeTimer + TIME_DELAY) {
         this.time -= 1;
         this.timeTimer = time.previous;

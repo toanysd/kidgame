@@ -199,12 +199,23 @@ export class StatusBar {
 	}
 
 	drawTime(context) {
+        if (localStorage.getItem('kidgame_time_limit') === '999') {
+            const timeFrame = TIME_FRAME_KEYS[Number(this.useFlashFrames)];
+            this.drawFrame(context, `${timeFrame}-9`, 178, 33);
+            this.drawFrame(context, `${timeFrame}-9`, 194, 33);
+            return;
+        }
 		const timeString = String(Math.max(this.time, 0)).padStart(2, '0');
-
 		const timeFrame = TIME_FRAME_KEYS[Number(this.useFlashFrames)];
 
-		this.drawFrame(context, `${timeFrame}-${timeString.charAt(0)}`, 178, 33);
-		this.drawFrame(context, `${timeFrame}-${timeString.charAt(1)}`, 194, 33);
+        if (timeString.length === 3) {
+            this.drawFrame(context, `${timeFrame}-${timeString.charAt(0)}`, 172, 33);
+            this.drawFrame(context, `${timeFrame}-${timeString.charAt(1)}`, 186, 33);
+            this.drawFrame(context, `${timeFrame}-${timeString.charAt(2)}`, 200, 33);
+        } else {
+    		this.drawFrame(context, `${timeFrame}-${timeString.charAt(0)}`, 178, 33);
+	    	this.drawFrame(context, `${timeFrame}-${timeString.charAt(1)}`, 194, 33);
+        }
 	}
 
 	drawNames(context) {
@@ -213,6 +224,8 @@ export class StatusBar {
 	}
 
 	updateTime(time) {
+        if (localStorage.getItem('kidgame_time_limit') === '999') return; // Freeze time
+
 		if (time.previous > this.timeTimer + TIME_DELAY) {
 			this.time -= 1;
 			this.timeTimer = time.previous;
