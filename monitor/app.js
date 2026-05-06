@@ -21,7 +21,7 @@ peer.on('error', (err) => {
 // Auto-accept incoming calls from game devices
 peer.on('call', (call) => {
     // Answer the call without sending any stream back
-    call.answer(null); 
+    call.answer(); 
     
     // We use a short random ID for the UI name, or just the peer id
     const shortId = call.peer.substring(0, 5).toUpperCase();

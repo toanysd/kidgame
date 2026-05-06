@@ -48,19 +48,30 @@ function initWebRTC() {
 function tryConnectToMonitor() {
     if (!peer || peer.disconnected) return;
     
-    // We must ensure the canvas has been drawn at least once,
-    // otherwise captureStream might fail or be empty.
-    const canvasStream = canvasEl.captureStream(30);
-    const call = peer.call('kidgame-monitor-master', canvasStream);
-    
-    if (call) {
-        currentCall = call;
-        call.on('error', (err) => {
-            currentCall = null;
-        });
-        call.on('close', () => {
-            currentCall = null;
-        });
+    try {
+        // We must ensure the canvas has been drawn at least once,
+        // otherwise captureStream might fail or be empty.
+        const canvasStream = canvasEl.captureStream(30);
+        console.log("Got canvas stream, tracks:", canvasStream.getTracks().length);
+        
+        if (canvasStream.getTracks().length === 0) return; // Wait until stream is ready
+        
+        const call = peer.call('kidgame-monitor-master', canvasStream);
+        
+        if (call) {
+            console.log("Calling monitor...");
+            currentCall = call;
+            call.on('error', (err) => {
+                console.error("Call error:", err);
+                currentCall = null;
+            });
+            call.on('close', () => {
+                console.log("Call closed");
+                currentCall = null;
+            });
+        }
+    } catch(e) {
+        console.error("tryConnectToMonitor Error: ", e);
     }
 }
 
