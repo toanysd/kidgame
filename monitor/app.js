@@ -1,8 +1,8 @@
 const grid = document.getElementById('grid');
 const statusEl = document.getElementById('status');
 const passwordModal = document.getElementById('passwordModal');
-const mainApp = document.getElementById('mainApp');
 const loginBtn = document.getElementById('loginBtn');
+const cancelLoginBtn = document.getElementById('cancelLoginBtn');
 const adminPass = document.getElementById('adminPass');
 const loginError = document.getElementById('loginError');
 
@@ -40,15 +40,79 @@ function initMonitor() {
     });
 }
 
+// Tab Logic
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+let activeTab = 'tab-time';
+let isMonitorUnlocked = false;
+
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-tab');
+        
+        if (target === 'tab-monitor' && !isMonitorUnlocked) {
+            // Require password
+            passwordModal.style.display = 'flex';
+            adminPass.value = '';
+            loginError.style.display = 'none';
+            adminPass.focus();
+            return;
+        }
+
+        switchTab(target);
+    });
+});
+
+function switchTab(targetId) {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    tabContents.forEach(c => c.classList.remove('active'));
+    
+    document.querySelector(`.tab-btn[data-tab="${targetId}"]`).classList.add('active');
+    document.getElementById(targetId).classList.add('active');
+    activeTab = targetId;
+}
+
 loginBtn.addEventListener('click', () => {
     if (adminPass.value === '1621') {
         passwordModal.style.display = 'none';
-        mainApp.style.display = 'flex';
+        isMonitorUnlocked = true;
+        switchTab('tab-monitor');
         initMonitor();
     } else {
         loginError.style.display = 'block';
     }
 });
+
+cancelLoginBtn.addEventListener('click', () => {
+    passwordModal.style.display = 'none';
+});
+
+// Settings Logic
+document.getElementById('saveTimeBtn').addEventListener('click', () => {
+    const val = document.getElementById('settingTime').value;
+    localStorage.setItem('kidgame_time_limit', val);
+    alert('Đã lưu giới hạn thời gian: ' + val + ' phút!');
+});
+
+document.getElementById('saveAudioBtn').addEventListener('click', () => {
+    const bgm = document.getElementById('settingBGM').value;
+    const sfx = document.getElementById('settingSFX').value;
+    localStorage.setItem('kidgame_bgm', bgm);
+    localStorage.setItem('kidgame_sfx', sfx);
+    alert('Đã lưu thiết lập âm thanh!');
+});
+
+// Load existing settings
+window.onload = () => {
+    const timeLimit = localStorage.getItem('kidgame_time_limit');
+    if (timeLimit) document.getElementById('settingTime').value = timeLimit;
+
+    const bgm = localStorage.getItem('kidgame_bgm');
+    if (bgm) document.getElementById('settingBGM').value = bgm;
+
+    const sfx = localStorage.getItem('kidgame_sfx');
+    if (sfx) document.getElementById('settingSFX').value = sfx;
+};
 
 // End of initialization
 

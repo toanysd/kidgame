@@ -21,7 +21,8 @@ window.addEventListener('resize', () => {
 
 // --- Game State ---
 let score = 0;
-let timeRemaining = 300; // 5 minutes = 300 seconds
+let timeLimitSetting = parseInt(localStorage.getItem('kidgame_time_limit') || '5');
+let timeRemaining = timeLimitSetting === 999 ? 999999 : timeLimitSetting * 60;
 let gameOver = false;
 let gameStarted = false;
 let fruits = [];
@@ -161,7 +162,8 @@ function startGame() {
 
     // Reset game state
     score = 0;
-    timeRemaining = 300;
+    timeLimitSetting = parseInt(localStorage.getItem('kidgame_time_limit') || '5');
+    timeRemaining = timeLimitSetting === 999 ? 999999 : timeLimitSetting * 60;
     gameOver = false;
     fruits = [];
     particles = [];
@@ -386,9 +388,13 @@ class Spawnable {
 
 function updateUI() {
     scoreEl.innerText = `Điểm: ${score}`;
-    const m = Math.floor(timeRemaining / 60);
-    const s = timeRemaining % 60;
-    timeEl.innerText = `Thời gian: ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    if (timeLimitSetting === 999) {
+        timeEl.innerText = `Thời gian: Vô cực`;
+    } else {
+        const m = Math.floor(timeRemaining / 60);
+        const s = timeRemaining % 60;
+        timeEl.innerText = `Thời gian: ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
 }
 
 // Line intersection with circle math
@@ -498,11 +504,14 @@ function loop(timestamp) {
                         score += 10;
                         updateUI();
                         
-                        if (f.type.audio) {
-                            let sound = f.type.audio.cloneNode();
-                            sound.play().catch(e => console.log(e));
-                        } else {
-                            speakText(f.type.name);
+                        const sfxSetting = localStorage.getItem('kidgame_sfx') || 'on';
+                        if (sfxSetting === 'on') {
+                            if (f.type.audio) {
+                                let sound = f.type.audio.cloneNode();
+                                sound.play().catch(e => console.log(e));
+                            } else {
+                                speakText(f.type.name);
+                            }
                         }
 
                         // Spawn Halves

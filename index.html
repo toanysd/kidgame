@@ -213,10 +213,38 @@
                 transform: translateY(0);
             }
         }
+        
+        .settings-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+        
+        .settings-btn:hover {
+            color: white;
+            transform: rotate(90deg);
+            background: rgba(99, 102, 241, 0.3);
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
     </style>
 </head>
 <body>
-
+    <a href="monitor/index.html" class="settings-btn" title="Thiết lập hệ thống">⚙️</a>
     <header>
         <h1>KidGame Arcade</h1>
         <p class="subtitle">Experience the next generation of interactive gaming</p>
@@ -249,14 +277,6 @@
             </div>
         </a>
 
-        <!-- Monitor Page -->
-        <a href="monitor/index.html" class="game-card">
-            <div class="card-content">
-                <h2 class="card-title">Quản Lý Cấu Hình</h2>
-                <p class="card-desc">Thiết lập hệ thống, quản lý thiết bị và tùy chỉnh thông số trò chơi.</p>
-                <div class="play-btn">Truy cập</div>
-            </div>
-        </a>
 
         <!-- Robot Wars (Placeholder) -->
         <a href="#" class="game-card" style="cursor: default;">
