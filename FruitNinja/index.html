@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fruit Ninja AR</title>
+    <!-- PeerJS for WebRTC -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- Mediapipe Hands -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -146,6 +148,12 @@
 </head>
 <body>
     <a id="backBtn" href="../index.html">← Trở về Hub</a>
+    
+    <!-- PIN Display for Monitor App -->
+    <div id="pinDisplay" style="display: none; position: absolute; top: 70px; left: 20px; padding: 10px 20px; background: rgba(0,0,0,0.7); color: #facc15; border-radius: 10px; font-size: 16px; font-weight: bold; font-family: 'Outfit', sans-serif; z-index: 20; border: 1px solid #facc15;">
+        Mã Giám Sát: <span id="pinValue">...</span>
+    </div>
+
     <div id="ui" style="display: none;">
         <div id="score">Điểm: 0</div>
         <div id="time">Thời gian: 05:00</div>

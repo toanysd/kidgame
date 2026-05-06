@@ -21,6 +21,34 @@ let lastTimeUpdate = 0;
 let currentThemeKey = null; // Store current theme for replay
 let isCameraRunning = false;
 
+// --- WebRTC Streaming ---
+let peer = null;
+let streamPIN = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit PIN
+
+function initWebRTC() {
+    const pinDisplay = document.getElementById('pinDisplay');
+    const pinValue = document.getElementById('pinValue');
+    pinValue.innerText = streamPIN;
+    pinDisplay.style.display = 'block';
+
+    peer = new Peer(`kidgame-${streamPIN}`);
+
+    peer.on('open', (id) => {
+        console.log('WebRTC Streamer Ready. ID:', id);
+    });
+
+    peer.on('call', (call) => {
+        console.log('Incoming call from monitor...');
+        // Capture canvas stream at 30 fps
+        const canvasStream = canvasEl.captureStream(30);
+        call.answer(canvasStream); // Answer with the canvas video stream
+    });
+
+    peer.on('error', (err) => {
+        console.error('PeerJS error:', err);
+    });
+}
+
 // --- TTS Function ---
 function speakText(text) {
     if (!window.speechSynthesis) return;
@@ -108,6 +136,7 @@ function startGame() {
     // Only call requestAnimationFrame if it's not already running
     if (!window.gameLoopRunning) {
         window.gameLoopRunning = true;
+        initWebRTC(); // Initialize streamer
         requestAnimationFrame(loop);
     }
 }

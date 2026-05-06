@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KidGame Monitor Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Load PeerJS -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #111827;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        header {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 {
+            margin: 0;
+            font-size: 32px;
+            color: #60a5fa;
+            text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+        .controls {
+            margin: 30px 0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        input[type="text"] {
+            padding: 15px;
+            font-size: 20px;
+            border-radius: 8px;
+            border: 2px solid #3b82f6;
+            background: #1f2937;
+            color: white;
+            outline: none;
+            width: 200px;
+            text-align: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: bold;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+            width: 90%;
+            max-width: 1400px;
+            padding-bottom: 50px;
+        }
+        .camera-card {
+            background: #1f2937;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .camera-header {
+            padding: 10px 15px;
+            background: #374151;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .camera-header span {
+            color: #facc15;
+        }
+        .close-btn {
+            background: transparent;
+            box-shadow: none;
+            padding: 5px;
+            color: #ef4444;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        video {
+            width: 100%;
+            height: 300px;
+            object-fit: contain;
+            background: #000;
+        }
+        .status-msg {
+            color: #9ca3af;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🖥️ Trung Tâm Giám Sát KidGame</h1>
+    </header>
+
+    <div class="controls">
+        <input type="text" id="pinInput" placeholder="Nhập mã PIN" maxlength="4">
+        <button id="addBtn">Thêm Thiết Bị</button>
+    </div>
+    
+    <div id="status" class="status-msg">Sẵn sàng kết nối...</div>
+
+    <div id="grid"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
