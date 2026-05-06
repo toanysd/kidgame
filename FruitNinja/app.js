@@ -93,7 +93,7 @@ const camera = new Camera(videoElement, {
 // START CAMERA AND WEBRTC IMMEDIATELY IN BACKGROUND
 camera.start();
 isCameraRunning = true;
-initWebRTC(); // Initialize streamer immediately
+// initWebRTC(); // Removed because Hub handles streaming
 window.gameLoopRunning = true;
 requestAnimationFrame(loop); // Start loop to render background feed
 
