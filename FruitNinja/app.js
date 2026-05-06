@@ -23,30 +23,45 @@ let isCameraRunning = false;
 
 // --- WebRTC Streaming ---
 let peer = null;
-let streamPIN = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit PIN
+let currentCall = null;
 
 function initWebRTC() {
-    const pinDisplay = document.getElementById('pinDisplay');
-    const pinValue = document.getElementById('pinValue');
-    pinValue.innerText = streamPIN;
-    pinDisplay.style.display = 'block';
-
-    peer = new Peer(`kidgame-${streamPIN}`);
+    peer = new Peer(); // Random ID
 
     peer.on('open', (id) => {
-        console.log('WebRTC Streamer Ready. ID:', id);
-    });
-
-    peer.on('call', (call) => {
-        console.log('Incoming call from monitor...');
-        // Capture canvas stream at 30 fps
-        const canvasStream = canvasEl.captureStream(30);
-        call.answer(canvasStream); // Answer with the canvas video stream
+        console.log('Game Peer ready:', id);
+        tryConnectToMonitor();
     });
 
     peer.on('error', (err) => {
         console.error('PeerJS error:', err);
     });
+
+    // Periodically try to connect if disconnected
+    setInterval(() => {
+        if (!currentCall || !currentCall.open) {
+            tryConnectToMonitor();
+        }
+    }, 5000);
+}
+
+function tryConnectToMonitor() {
+    if (!peer || peer.disconnected) return;
+    
+    // We must ensure the canvas has been drawn at least once,
+    // otherwise captureStream might fail or be empty.
+    const canvasStream = canvasEl.captureStream(30);
+    const call = peer.call('kidgame-monitor-master', canvasStream);
+    
+    if (call) {
+        currentCall = call;
+        call.on('error', (err) => {
+            currentCall = null;
+        });
+        call.on('close', () => {
+            currentCall = null;
+        });
+    }
 }
 
 // --- TTS Function ---

@@ -1,46 +1,33 @@
-const pinInput = document.getElementById('pinInput');
-const addBtn = document.getElementById('addBtn');
 const grid = document.getElementById('grid');
 const statusEl = document.getElementById('status');
 
-// Initialize Peer for the Monitor (it doesn't need a specific ID)
-const peer = new Peer();
+// Initialize Peer for the Monitor with a FIXED Master ID
+const peer = new Peer('kidgame-monitor-master');
 
 peer.on('open', (id) => {
-    console.log('Monitor ready with ID:', id);
+    console.log('Monitor ready with Master ID:', id);
+    statusEl.innerHTML = "✅ Hệ thống Giám sát đã sẵn sàng.<br><span style='font-size:14px; color:#9ca3af'>Tự động hiển thị khi có thiết bị vào game.</span>";
 });
 
 peer.on('error', (err) => {
     console.error(err);
-    statusEl.innerText = `Lỗi: ${err.type} - Vui lòng kiểm tra lại mã PIN.`;
+    if (err.type === 'unavailable-id') {
+        statusEl.innerHTML = "⚠️ Cảnh báo: Có vẻ một Màn hình Giám sát khác đã được mở. Chỉ 1 màn hình chính được hoạt động.";
+    } else {
+        statusEl.innerText = `Lỗi mạng: ${err.type}`;
+    }
 });
 
-addBtn.addEventListener('click', () => {
-    const pin = pinInput.value.trim();
-    if (pin.length !== 4) {
-        statusEl.innerText = "Vui lòng nhập mã PIN gồm 4 chữ số.";
-        return;
-    }
-
-    const targetId = `kidgame-${pin}`;
-    statusEl.innerText = `Đang kết nối tới Thiết bị: ${pin}...`;
-
-    // Initiate call
-    const call = peer.call(targetId, null); // We don't send our own stream
+// Auto-accept incoming calls from game devices
+peer.on('call', (call) => {
+    // Answer the call without sending any stream back
+    call.answer(null); 
     
-    if (!call) {
-        statusEl.innerText = `Không thể gọi tới PIN ${pin}.`;
-        return;
-    }
-
+    // We use a short random ID for the UI name, or just the peer id
+    const shortId = call.peer.substring(0, 5).toUpperCase();
+    
     call.on('stream', (remoteStream) => {
-        statusEl.innerText = `Đã kết nối thành công tới ${pin}!`;
-        addVideoCard(pin, remoteStream, call);
-        pinInput.value = ''; // clear input
-    });
-
-    call.on('close', () => {
-        statusEl.innerText = `Kết nối tới ${pin} đã đóng.`;
+        addVideoCard(shortId, remoteStream, call);
     });
 });
 
