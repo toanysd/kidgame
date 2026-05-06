@@ -543,6 +543,7 @@
             let existingIframe = document.getElementById('frame_' + url);
             if (existingIframe) {
                 existingIframe.style.display = 'block';
+                existingIframe.contentWindow.postMessage('reset_game_ui', '*');
                 activeIframe = existingIframe;
                 return;
             }
