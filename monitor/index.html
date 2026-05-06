@@ -111,6 +111,43 @@
             color: #9ca3af;
             margin-bottom: 20px;
         }
+        .camera-controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: #111827;
+            border-top: 1px solid #374151;
+            align-items: center;
+        }
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: bold;
+            color: white;
+            transition: opacity 0.2s;
+        }
+        .btn-small:hover { opacity: 0.8; }
+        .btn-record { background: #ef4444; }
+        .btn-record.recording { 
+            background: #facc15; 
+            color: black; 
+            animation: blink 1s infinite; 
+        }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        .btn-shot { background: #3b82f6; }
+        .interval-select {
+            background: #374151;
+            color: white;
+            border: 1px solid #4b5563;
+            padding: 6px;
+            border-radius: 5px;
+            font-family: 'Outfit', sans-serif;
+            outline: none;
+        }
     </style>
 </head>
 <body>
