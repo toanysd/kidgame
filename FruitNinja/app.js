@@ -51,7 +51,7 @@ function tryConnectToMonitor() {
     try {
         // We must ensure the canvas has been drawn at least once,
         // otherwise captureStream might fail or be empty.
-        const canvasStream = canvasEl.captureStream(30);
+        const canvasStream = canvas.captureStream(30);
         console.log("Got canvas stream, tracks:", canvasStream.getTracks().length);
         
         if (canvasStream.getTracks().length === 0) return; // Wait until stream is ready
