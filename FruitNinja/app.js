@@ -32,59 +32,7 @@ let lastTimeUpdate = 0;
 let currentThemeKey = null; // Store current theme for replay
 let isCameraRunning = false;
 
-// --- WebRTC Streaming ---
-let peer = null;
-let currentCall = null;
-
-function initWebRTC() {
-    peer = new Peer(); // Random ID
-
-    peer.on('open', (id) => {
-        console.log('Game Peer ready:', id);
-        tryConnectToMonitor();
-    });
-
-    peer.on('error', (err) => {
-        console.error('PeerJS error:', err);
-    });
-
-    // Periodically try to connect if disconnected
-    setInterval(() => {
-        if (!currentCall || !currentCall.open) {
-            tryConnectToMonitor();
-        }
-    }, 5000);
-}
-
-function tryConnectToMonitor() {
-    if (!peer || peer.disconnected) return;
-    
-    try {
-        // We must ensure the canvas has been drawn at least once,
-        // otherwise captureStream might fail or be empty.
-        const canvasStream = canvas.captureStream(30);
-        console.log("Got canvas stream, tracks:", canvasStream.getTracks().length);
-        
-        if (canvasStream.getTracks().length === 0) return; // Wait until stream is ready
-        
-        const call = peer.call('kidgame-monitor-master', canvasStream);
-        
-        if (call) {
-            console.log("Calling monitor...");
-            currentCall = call;
-            call.on('error', (err) => {
-                console.error("Call error:", err);
-                currentCall = null;
-            });
-            call.on('close', () => {
-                console.log("Call closed");
-                currentCall = null;
-            });
-        }
-    } catch(e) {
-        console.error("tryConnectToMonitor Error: ", e);
-    }
-}
+// --- WebRTC Streaming (Removed, handled by Hub continuously) ---
 
 // --- TTS Function ---
 function speakText(text) {

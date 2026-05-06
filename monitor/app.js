@@ -158,6 +158,12 @@ function addVideoCard(pin, stream, callObj) {
         card.remove();
     };
 
+    callObj.on('close', () => {
+        if (snapIntervalId) clearInterval(snapIntervalId);
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+        card.remove();
+    });
+
     btnGroup.appendChild(collapseBtn);
     btnGroup.appendChild(closeBtn);
     header.appendChild(btnGroup);
