@@ -4,91 +4,101 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KidGame Arcade - Select Your Game</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Fredoka+One&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Baloo 2', cursive;
         }
 
         body {
-            background-color: #0f172a;
-            color: #f8fafc;
+            background-color: #87CEEB; /* Sky Blue */
+            color: #333;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
+            background-image: radial-gradient(circle at center, #fef08a 0%, #f59e0b 100%);
             overflow-x: hidden;
+            transition: all 0.5s ease;
         }
 
         header {
-            margin-top: 4rem;
-            margin-bottom: 3rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
             text-align: center;
-            animation: fadeInDown 1s ease-out;
+            animation: bounceIn 1s ease-out;
+            position: relative;
+            z-index: 10;
         }
 
         h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 1rem;
-            text-shadow: 0 10px 30px rgba(192, 132, 252, 0.2);
+            font-size: 3rem;
+            font-family: 'Fredoka One', cursive;
+            color: #fff;
+            text-shadow: 4px 4px 0 #ea580c, -2px -2px 0 #ea580c, 2px -2px 0 #ea580c, -2px 2px 0 #ea580c, 0 10px 15px rgba(0,0,0,0.3);
+            letter-spacing: 2px;
+            margin-bottom: 0.2rem;
         }
 
         p.subtitle {
             font-size: 1.2rem;
-            color: #94a3b8;
-            font-weight: 300;
+            color: #78350f;
+            font-weight: 800;
+            background: rgba(255,255,255,0.5);
+            padding: 5px 20px;
+            border-radius: 20px;
+            display: inline-block;
         }
 
         .game-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
             width: 100%;
             max-width: 1200px;
-            padding: 0 2rem;
-            margin-bottom: 4rem;
+            padding: 0 1rem;
+            margin-bottom: 1rem;
+            z-index: 10;
         }
 
         .game-card {
-            background: rgba(30, 41, 59, 0.4);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 24px;
+            background: white;
+            border: 6px solid #fff;
+            border-radius: 35px;
             overflow: hidden;
             text-decoration: none;
             color: inherit;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             flex-direction: column;
-            animation: fadeInUp 0.8s ease-out backwards;
+            box-shadow: 0 15px 0 rgba(0,0,0,0.1), 0 20px 25px rgba(0,0,0,0.15);
+            cursor: pointer;
         }
 
-        .game-card:nth-child(1) { animation-delay: 0.1s; }
-        .game-card:nth-child(2) { animation-delay: 0.2s; }
-        .game-card:nth-child(3) { animation-delay: 0.3s; }
-
         .game-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 
-                        0 0 20px rgba(99, 102, 241, 0.2);
-            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-15px) rotate(2deg);
+            border-color: #3b82f6;
+            box-shadow: 0 20px 0 #2563eb, 0 30px 35px rgba(0,0,0,0.2);
+        }
+
+        .game-card:active {
+            transform: translateY(5px);
+            box-shadow: 0 0px 0 #2563eb;
         }
 
         .card-image {
             width: 100%;
-            height: 220px;
+            height: 150px;
             overflow: hidden;
             position: relative;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
         }
 
         .card-image img {
@@ -102,57 +112,51 @@
             transform: scale(1.1);
         }
 
-        .card-image::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 50%;
-            background: linear-gradient(to top, rgba(30, 41, 59, 1), transparent);
-        }
-
         .card-content {
-            padding: 2rem;
+            padding: 1rem;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
 
         .tag {
-            align-self: flex-start;
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
+            padding: 0.3rem 1rem;
+            border-radius: 25px;
             font-size: 0.8rem;
-            font-weight: 600;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Fredoka One', cursive;
         }
 
         .tag.ar {
-            background: rgba(236, 72, 153, 0.1);
-            color: #f472b6;
-            border: 1px solid rgba(236, 72, 153, 0.2);
+            background: #fdf2f8;
+            color: #ec4899;
+            border: 3px solid #fbcfe8;
         }
 
         .tag.coming-soon {
-            background: rgba(148, 163, 184, 0.1);
-            color: #94a3b8;
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            background: #f1f5f9;
+            color: #64748b;
+            border: 3px solid #e2e8f0;
         }
 
         .card-title {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 0.8rem;
+            font-size: 1.5rem;
+            font-family: 'Fredoka One', cursive;
+            color: #1f2937;
+            margin-bottom: 0.2rem;
         }
 
         .card-desc {
-            color: #94a3b8;
+            color: #4b5563;
             font-size: 1rem;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            font-weight: 600;
             flex-grow: 1;
         }
 
@@ -160,137 +164,414 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
+            padding: 8px 25px;
+            background: #4ade80;
             color: white;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            border-radius: 50px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2rem;
+            border: 4px solid white;
+            box-shadow: 0 5px 0 #16a34a;
+            transition: all 0.2s;
         }
 
-        .play-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .game-card:hover .play-btn::before {
-            left: 100%;
+        .game-card:hover .play-btn {
+            transform: scale(1.1);
         }
 
         .play-btn.disabled {
-            background: rgba(71, 85, 105, 0.5);
-            color: #94a3b8;
+            background: #94a3b8;
+            box-shadow: 0 8px 0 #64748b;
             cursor: not-allowed;
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
         }
         
         .settings-btn {
             position: absolute;
             top: 20px;
             right: 20px;
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #94a3b8;
-            font-size: 24px;
+            background: white;
+            border: 4px solid #facc15;
+            color: #ca8a04;
+            font-size: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
             text-decoration: none;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 0 #ca8a04;
             z-index: 100;
         }
         
         .settings-btn:hover {
+            transform: rotate(90deg) scale(1.1);
+            background: #fef08a;
+        }
+
+        .lang-selector {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .lang-btn {
+            background: white;
+            border: 3px solid #3b82f6;
+            color: #2563eb;
+            font-family: 'Fredoka One', cursive;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #2563eb;
+            transition: all 0.2s;
+        }
+
+        .lang-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 0 #2563eb;
+        }
+        .lang-btn.active {
+            background: #3b82f6;
             color: white;
-            transform: rotate(90deg);
-            background: rgba(99, 102, 241, 0.3);
-            border-color: rgba(99, 102, 241, 0.5);
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            border-color: white;
+        }
+
+        /* Iframe Container for SPA */
+        #gameContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 1000;
+            display: none;
+        }
+        #gameContainer iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        #closeGameBtn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #ef4444;
+            color: white;
+            border: 4px solid white;
+            border-radius: 25px;
+            padding: 15px 25px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 2000;
+            box-shadow: 0 6px 0 #b91c1c;
+            display: none;
+            transition: transform 0.2s;
+        }
+        #closeGameBtn:hover {
+            transform: scale(1.1);
+        }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 768px) {
+            header {
+                margin-top: 70px; /* Make room for top buttons */
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            p.subtitle {
+                font-size: 0.9rem;
+                padding: 2px 10px;
+            }
+            .game-grid {
+                grid-template-columns: 1fr 1fr; /* Force 2x2 grid */
+                gap: 0.5rem;
+                padding: 0 5px;
+                margin-bottom: 0.5rem;
+            }
+            .game-card {
+                border-width: 2px;
+                border-radius: 10px;
+            }
+            .card-image {
+                height: 70px;
+                font-size: 30px;
+            }
+            .card-content {
+                padding: 5px;
+            }
+            .tag {
+                font-size: 0.5rem;
+                padding: 0.1rem 0.4rem;
+                margin-bottom: 0.2rem;
+                border-width: 1px;
+            }
+            .card-title {
+                font-size: 0.8rem;
+                margin-bottom: 0.1rem;
+            }
+            .card-desc {
+                display: none; /* Hide description on mobile to save space */
+            }
+            .play-btn {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+                border-width: 2px;
+                box-shadow: 0 2px 0 #16a34a;
+            }
+            .lang-selector {
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%); /* Center on mobile */
+            }
+            .lang-btn {
+                padding: 4px 8px;
+                font-size: 12px;
+                border-width: 2px;
+                box-shadow: 0 2px 0 #2563eb;
+            }
+            .settings-btn {
+                top: 45px;
+                right: 10px;
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+                border-width: 2px;
+                box-shadow: 0 2px 0 #ca8a04;
+            }
+            #closeGameBtn {
+                top: 45px;
+                left: 10px;
+                padding: 5px 10px;
+                font-size: 12px;
+                border-width: 2px;
+                box-shadow: 0 2px 0 #b91c1c;
+            }
         }
     </style>
 </head>
 <body>
-    <a href="monitor/index.html" class="settings-btn" title="Thiết lập hệ thống">⚙️</a>
+    <div class="lang-selector">
+        <button class="lang-btn active" onclick="setLang('vi')">🇻🇳 VI</button>
+        <button class="lang-btn" onclick="setLang('ja')">🇯🇵 JP</button>
+        <button class="lang-btn" onclick="setLang('en')">🇬🇧 EN</button>
+    </div>
+
+    <a href="monitor/index.html" class="settings-btn" title="Settings">⚙️</a>
+    
     <header>
-        <h1>KidGame Arcade</h1>
-        <p class="subtitle">Experience the next generation of interactive gaming</p>
+        <h1 id="t_title">Khu Vui Chơi</h1>
+        <p class="subtitle" id="t_subtitle">Chọn một trò chơi thật vui nhé!</p>
     </header>
 
     <div class="game-grid">
-        <!-- Street Fighter AR -->
-        <a href="StreetFighter/index.html" class="game-card">
-            <div class="card-image">
-                <img src="img/robot_fighter.png" alt="Street Fighter AR">
-            </div>
-            <div class="card-content">
-                <span class="tag ar">AR Camera Mode</span>
-                <h2 class="card-title">Street Fighter AR</h2>
-                <p class="card-desc">Use your webcam to perform real-life martial arts moves! Slice your opponents like Fruit Ninja and charge up your Hadouken energy by bringing your wrists together.</p>
-                <div class="play-btn">Play Now</div>
-            </div>
-        </a>
-
         <!-- Fruit Ninja AR -->
-        <a href="FruitNinja/index.html" class="game-card">
+        <div onclick="openGame('FruitNinja/index.html')" class="game-card">
             <div class="card-image">
-                <img src="img/boss_monster.png" alt="Fruit Ninja AR" style="filter: hue-rotate(90deg);">
+                🍎🗡️
             </div>
             <div class="card-content">
-                <span class="tag ar">AR Camera Mode</span>
-                <h2 class="card-title">Fruit Ninja AR</h2>
-                <p class="card-desc">Biến đôi tay của bạn thành thanh katana sắc bén. Chém đứt đôi mọi loại trái cây bay qua màn hình bằng công nghệ nhận diện chuyển động tay AI siêu tốc.</p>
-                <div class="play-btn">Play Now</div>
+                <span class="tag ar">Camera AI</span>
+                <h2 class="card-title" id="t_fn_title">Chém Hoa Quả</h2>
+                <p class="card-desc" id="t_fn_desc">Dùng tay múa như Ninja để chém trái cây nhé! Chơi cùng Sâu háu ăn, Cảnh sát chó và Tàu điện!</p>
+                <div class="play-btn" id="t_play1">Chơi Ngay!</div>
             </div>
-        </a>
+        </div>
 
+        <!-- Street Fighter AR -->
+        <div onclick="openGame('StreetFighter/index.html')" class="game-card">
+            <div class="card-image">
+                🥋🔥
+            </div>
+            <div class="card-content">
+                <span class="tag ar">Camera AI</span>
+                <h2 class="card-title" id="t_sf_title">Đánh Võ Phép Thuật</h2>
+                <p class="card-desc" id="t_sf_desc">Đứng trước màn hình, đấm đá và vận nội công chưởng lửa như siêu nhân!</p>
+                <div class="play-btn" id="t_play2">Chơi Ngay!</div>
+            </div>
+        </div>
 
         <!-- Robot Wars (Placeholder) -->
-        <a href="#" class="game-card" style="cursor: default;">
+        <div class="game-card" style="cursor: default; opacity: 0.8;">
             <div class="card-image">
-                <img src="img/robot.png" alt="Robot Wars">
+                🤖🚀
             </div>
             <div class="card-content">
-                <span class="tag coming-soon">Coming Soon</span>
-                <h2 class="card-title">Mecha Wars</h2>
-                <p class="card-desc">Build, customize, and pilot giant mechas. Fight against AI or your friends in local multiplayer.</p>
-                <div class="play-btn disabled">Locked</div>
+                <span class="tag coming-soon" id="t_soon">Sắp Ra Mắt</span>
+                <h2 class="card-title" id="t_rw_title">Đấu Trường Robot</h2>
+                <p class="card-desc" id="t_rw_desc">Lắp ráp robot khổng lồ của riêng bé và chiến đấu. Đang xây dựng nha!</p>
+                <div class="play-btn disabled" id="t_locked">Chưa mở khóa</div>
             </div>
-        </a>
+        </div>
     </div>
+
+    <!-- Hidden Game Container -->
+    <div id="gameContainer">
+        <button id="closeGameBtn" onclick="closeGame()">🏠 Về Nhà</button>
+    </div>
+
+    <script>
+        // --- I18N SYSTEM ---
+        const dictionary = {
+            vi: {
+                title: "Khu Vui Chơi",
+                subtitle: "Chọn một trò chơi thật vui nhé!",
+                fn_title: "Chém Hoa Quả",
+                fn_desc: "Dùng tay múa như Ninja để chém trái cây nhé! Chơi cùng Sâu háu ăn, Cảnh sát chó và Tàu điện!",
+                sf_title: "Đánh Võ Phép Thuật",
+                sf_desc: "Đứng trước màn hình, đấm đá và vận nội công chưởng lửa như siêu nhân!",
+                rw_title: "Đấu Trường Robot",
+                rw_desc: "Lắp ráp robot khổng lồ của riêng bé và chiến đấu. Đang xây dựng nha!",
+                play: "Chơi Ngay!",
+                soon: "Sắp Ra Mắt",
+                locked: "Chưa mở khóa",
+                home: "🏠 Về Nhà"
+            },
+            ja: {
+                title: "キッズプレイランド",
+                subtitle: "楽しいゲームをえらぼう！",
+                fn_title: "フルーツ忍者",
+                fn_desc: "手を使ってフルーツを切ろう！あおむし、ラブラドール警察、踏み切りと一緒に遊ぼう！",
+                sf_title: "魔法の格闘技",
+                sf_desc: "画面の前に立って、パンチやキックをしてスーパーマンのように魔法を放とう！",
+                rw_title: "ロボットバトル",
+                rw_desc: "自分だけの巨大ロボットを組み立てて戦おう。準備中だよ！",
+                play: "あそぶ！",
+                soon: "もうすぐ",
+                locked: "まだあそべない",
+                home: "🏠 おうちにかえる"
+            },
+            en: {
+                title: "Kids Playground",
+                subtitle: "Choose a fun game to play!",
+                fn_title: "Fruit Ninja",
+                fn_desc: "Use your hands like a Ninja to slice fruits! Play with Caterpillar, Sheriff Labrador and Trains!",
+                sf_title: "Magic Fighter",
+                sf_desc: "Stand in front of the screen, punch, kick and shoot fireballs like a superhero!",
+                rw_title: "Robot Arena",
+                rw_desc: "Build your own giant robot and fight. Currently under construction!",
+                play: "Play Now!",
+                soon: "Coming Soon",
+                locked: "Locked",
+                home: "🏠 Go Home"
+            }
+        };
+
+        function setLang(lang) {
+            localStorage.setItem('kidgame_lang', lang);
+            
+            // Update active button
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.innerText.toLowerCase().includes(lang)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Apply translations
+            const text = dictionary[lang] || dictionary['vi'];
+            document.getElementById('t_title').innerText = text.title;
+            document.getElementById('t_subtitle').innerText = text.subtitle;
+            document.getElementById('t_fn_title').innerText = text.fn_title;
+            document.getElementById('t_fn_desc').innerText = text.fn_desc;
+            document.getElementById('t_sf_title').innerText = text.sf_title;
+            document.getElementById('t_sf_desc').innerText = text.sf_desc;
+            document.getElementById('t_rw_title').innerText = text.rw_title;
+            document.getElementById('t_rw_desc').innerText = text.rw_desc;
+            document.getElementById('t_soon').innerText = text.soon;
+            document.getElementById('t_locked').innerText = text.locked;
+            document.getElementById('t_play1').innerText = text.play;
+            document.getElementById('t_play2').innerText = text.play;
+            document.getElementById('closeGameBtn').innerText = text.home;
+        }
+
+        // Initialize language
+        const savedLang = localStorage.getItem('kidgame_lang') || 'vi';
+        setLang(savedLang);
+
+        // --- PRE-WARM CAMERA PERMISSION ---
+        // Yêu cầu quyền Camera ngay từ trang chủ. Nếu được cấp, các game sau sẽ không bị hỏi lại.
+        let globalCameraStream = null;
+        async function preWarmCamera() {
+            if (window.location.protocol !== 'file:') {
+                try {
+                    globalCameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    console.log("Camera pre-warmed successfully!");
+                } catch (err) {
+                    console.log("Camera pre-warm failed or denied:", err);
+                }
+            }
+        }
+        
+        // Chỉ chạy xin quyền khi người dùng click tương tác đầu tiên (tránh trình duyệt chặn popup)
+        document.body.addEventListener('click', function initCam() {
+            if (!globalCameraStream) preWarmCamera();
+            document.body.removeEventListener('click', initCam);
+        });
+
+        // --- SINGLE PAGE APP LOGIC ---
+        const gameContainer = document.getElementById('gameContainer');
+        const closeBtn = document.getElementById('closeGameBtn');
+        let activeIframe = null;
+
+        function openGame(url) {
+            // Nếu người dùng chạy trực tiếp bằng file:/// (nháy đúp), Iframe sẽ bị lỗi Camera.
+            // Do đó tự động lùi về phương pháp chuyển trang cũ (sẽ bị hỏi quyền nhiều lần).
+            if (window.location.protocol === 'file:') {
+                window.location.href = url;
+                return;
+            }
+
+            gameContainer.style.display = 'block';
+            closeBtn.style.display = 'block';
+            
+            // Check if iframe already exists for this game to avoid re-asking camera
+            let existingIframe = document.getElementById('frame_' + url);
+            if (existingIframe) {
+                existingIframe.style.display = 'block';
+                activeIframe = existingIframe;
+                return;
+            }
+
+            // Create new iframe
+            const iframe = document.createElement('iframe');
+            iframe.id = 'frame_' + url;
+            iframe.src = url;
+            iframe.allow = "camera; microphone";
+            gameContainer.appendChild(iframe);
+            activeIframe = iframe;
+        }
+
+        function closeGame() {
+            gameContainer.style.display = 'none';
+            closeBtn.style.display = 'none';
+            if (activeIframe) {
+                activeIframe.style.display = 'none'; // We just hide it! Camera keeps running in background.
+            }
+        }
+
+        // Listen for messages from child iframes (in case they have their own back buttons)
+        window.addEventListener('message', (event) => {
+            if (event.data === 'close_game') {
+                closeGame();
+            }
+        });
+
+    </script>
 
 </body>
 </html>

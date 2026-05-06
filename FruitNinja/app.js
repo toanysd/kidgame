@@ -387,13 +387,14 @@ class Spawnable {
 }
 
 function updateUI() {
-    scoreEl.innerText = `Điểm: ${score}`;
+    const texts = window.langTexts || { score_t: "Điểm: ", time_t: "Thời gian: " };
+    scoreEl.innerText = `${texts.score_t}${score}`;
     if (timeLimitSetting === 999) {
-        timeEl.innerText = `Thời gian: Vô cực`;
+        timeEl.innerText = `${texts.time_t} Vô cực`;
     } else {
         const m = Math.floor(timeRemaining / 60);
         const s = timeRemaining % 60;
-        timeEl.innerText = `Thời gian: ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        timeEl.innerText = `${texts.time_t}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
 }
 
@@ -448,8 +449,8 @@ function loop(timestamp) {
         ctx.save();
         ctx.translate(WIDTH, 0);
         ctx.scale(-1, 1);
-        // Draw flipped correctly
-        ctx.drawImage(videoElement, -drawX, drawY, drawW, drawH);
+        // Draw flipped correctly. drawX is already the correct positive offset for centered drawing.
+        ctx.drawImage(videoElement, drawX, drawY, drawW, drawH);
         ctx.restore();
         
         ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
@@ -471,8 +472,9 @@ function loop(timestamp) {
         lastTimeUpdate = timestamp;
         if (timeRemaining <= 0) {
             gameOver = true;
+            const texts = window.langTexts || { score_t: "Điểm: " };
             document.getElementById('gameOverScreen').style.display = 'flex';
-            document.getElementById('finalScoreText').innerText = `Bé đạt được: ${score} điểm!`;
+            document.getElementById('finalScoreText').innerText = `${texts.score_t}${score}`;
         }
     }
 

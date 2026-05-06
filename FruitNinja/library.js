@@ -15,14 +15,14 @@ const THEMES = {
     ],
     labrador: [
         // Khung xương cho chủ đề Cảnh sát trưởng Labrador
-        { emoji: '🐕', name: 'Labrador', color: '#eab308', size: 50 },
+        { emoji: '🐕', name: 'Labrador', src: 'assets/themes/labrador/labrador_1.png', color: '#eab308', size: 80 },
         { emoji: '🚓', name: 'Police Car', color: '#3b82f6', size: 55 },
         { emoji: '👮', name: 'Police', color: '#3b82f6', size: 45 },
         { emoji: '🍩', name: 'Donut', color: '#ec4899', size: 40 }
     ],
     crossing: [
         // Khung xương cho chủ đề Trạm tàu điện (踏み切り)
-        { emoji: '🚆', name: 'Train', color: '#3b82f6', size: 50 },
+        { emoji: '🚆', name: 'Train', src: 'assets/themes/crossing/crossing_1.png', color: '#3b82f6', size: 80 },
         { emoji: '🚧', name: 'Barrier', color: '#eab308', size: 45 },
         { emoji: '🚥', name: 'Traffic Light', color: '#ef4444', size: 40 },
         { emoji: '🔔', name: 'Bell', color: '#eab308', size: 35 }
