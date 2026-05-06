@@ -14,21 +14,21 @@
         body { 
             background-color: #111; 
             color: white; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Outfit', 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
             overflow: hidden; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
+            width: 100vw;
             height: 100vh;
         }
         #gameCanvas {
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
-            border: 2px solid #333;
-            border-radius: 8px;
-            /* Scale to fit screen while maintaining 16:9 ratio */
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            z-index: 1;
         }
         #ui {
             position: absolute;
@@ -58,15 +58,16 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 30;
-            background: rgba(0,0,0,0.85);
+            background: #111827; /* Solid background as requested */
             padding: 20px;
+            overflow-y: auto;
         }
         .theme-grid {
             display: grid;
@@ -147,11 +148,11 @@
     </style>
 </head>
 <body>
-    <a id="backBtn" href="../index.html">← Trở về Hub</a>
+    <a id="backBtn" href="../index.html" style="position: absolute; top: 15px; left: 15px; z-index: 20; color: #9ca3af; text-decoration: none; font-weight: bold; background: rgba(0,0,0,0.5); padding: 10px 15px; border-radius: 8px;">← Trở về Hub</a>
 
-    <div id="ui" style="display: none;">
-        <div id="score">Điểm: 0</div>
-        <div id="time">Thời gian: 05:00</div>
+    <div id="ui" style="display: none; position: absolute; top: 15px; right: 15px; z-index: 20; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 10px;">
+        <div id="score" style="font-size: 24px; font-weight: bold; color: #facc15; margin-bottom: 5px;">Điểm: 0</div>
+        <div id="time" style="font-size: 20px; color: #60a5fa;">Thời gian: 05:00</div>
     </div>
     
     <div id="startScreen">
@@ -198,7 +199,7 @@
 
     <div id="loading">Đang tải Camera & AI... Hãy lùi lại 1 mét!</div>
     
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <canvas id="gameCanvas"></canvas>
 
     <script src="library.js"></script>
     <script src="app.js"></script>

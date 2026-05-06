@@ -1,35 +1,56 @@
 const grid = document.getElementById('grid');
 const statusEl = document.getElementById('status');
+const passwordModal = document.getElementById('passwordModal');
+const mainApp = document.getElementById('mainApp');
+const loginBtn = document.getElementById('loginBtn');
+const adminPass = document.getElementById('adminPass');
+const loginError = document.getElementById('loginError');
 
-// Initialize Peer for the Monitor with a FIXED Master ID
-const peer = new Peer('kidgame-monitor-master');
+let peer = null;
 
-peer.on('open', (id) => {
-    console.log('Monitor ready with Master ID:', id);
-    statusEl.innerHTML = "✅ Hệ thống Giám sát đã sẵn sàng.<br><span style='font-size:14px; color:#9ca3af'>Tự động hiển thị khi có thiết bị vào game.</span>";
-});
+function initMonitor() {
+    // Initialize Peer for the Monitor with a FIXED Master ID
+    peer = new Peer('kidgame-monitor-master');
 
-peer.on('error', (err) => {
-    console.error(err);
-    if (err.type === 'unavailable-id') {
-        statusEl.innerHTML = "⚠️ Cảnh báo: Có vẻ một Màn hình Giám sát khác đã được mở. Chỉ 1 màn hình chính được hoạt động.";
+    peer.on('open', (id) => {
+        console.log('Monitor ready with Master ID:', id);
+        statusEl.innerHTML = "✅ Hệ thống đã sẵn sàng.<br><span style='font-size:14px; color:#9ca3af'>Tự động hiển thị khi thiết bị hoạt động.</span>";
+    });
+
+    peer.on('error', (err) => {
+        console.error(err);
+        if (err.type === 'unavailable-id') {
+            statusEl.innerHTML = "⚠️ Cảnh báo: Có vẻ một màn hình Quản lý khác đã được mở. Chỉ 1 màn hình chính được hoạt động.";
+        } else {
+            statusEl.innerText = `Lỗi mạng: ${err.type}`;
+        }
+    });
+
+    // Auto-accept incoming calls from game devices
+    peer.on('call', (call) => {
+        // Answer the call without sending any stream back
+        call.answer(); 
+        
+        // We use a short random ID for the UI name, or just the peer id
+        const shortId = call.peer.substring(0, 5).toUpperCase();
+        
+        call.on('stream', (remoteStream) => {
+            addVideoCard(shortId, remoteStream, call);
+        });
+    });
+}
+
+loginBtn.addEventListener('click', () => {
+    if (adminPass.value === '1621') {
+        passwordModal.style.display = 'none';
+        mainApp.style.display = 'flex';
+        initMonitor();
     } else {
-        statusEl.innerText = `Lỗi mạng: ${err.type}`;
+        loginError.style.display = 'block';
     }
 });
 
-// Auto-accept incoming calls from game devices
-peer.on('call', (call) => {
-    // Answer the call without sending any stream back
-    call.answer(); 
-    
-    // We use a short random ID for the UI name, or just the peer id
-    const shortId = call.peer.substring(0, 5).toUpperCase();
-    
-    call.on('stream', (remoteStream) => {
-        addVideoCard(shortId, remoteStream, call);
-    });
-});
+// End of initialization
 
 function addVideoCard(pin, stream, callObj) {
     // Check if card already exists
@@ -41,7 +62,23 @@ function addVideoCard(pin, stream, callObj) {
 
     const header = document.createElement('div');
     header.className = 'camera-header';
-    header.innerHTML = `<span>📱 Thiết bị PIN: ${pin}</span>`;
+    header.innerHTML = `<span>📱 Thiết bị ID: ${pin}</span>`;
+
+    const btnGroup = document.createElement('div');
+    
+    // Collapse Button
+    const collapseBtn = document.createElement('button');
+    collapseBtn.className = 'close-btn';
+    collapseBtn.innerText = '➖';
+    collapseBtn.style.color = 'white';
+    collapseBtn.style.marginRight = '10px';
+    let isCollapsed = false;
+    collapseBtn.onclick = () => {
+        isCollapsed = !isCollapsed;
+        video.style.display = isCollapsed ? 'none' : 'block';
+        controls.style.display = isCollapsed ? 'none' : 'flex';
+        collapseBtn.innerText = isCollapsed ? '➕' : '➖';
+    };
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'close-btn';
@@ -56,7 +93,10 @@ function addVideoCard(pin, stream, callObj) {
         callObj.close();
         card.remove();
     };
-    header.appendChild(closeBtn);
+
+    btnGroup.appendChild(collapseBtn);
+    btnGroup.appendChild(closeBtn);
+    header.appendChild(btnGroup);
 
     const video = document.createElement('video');
     video.autoplay = true;

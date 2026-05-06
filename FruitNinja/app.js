@@ -6,8 +6,18 @@ const loadingEl = document.getElementById('loading');
 const uiEl = document.getElementById('ui');
 const startBtn = document.getElementById('startBtn');
 
-const WIDTH = canvas.width;
-const HEIGHT = canvas.height;
+let WIDTH = window.innerWidth;
+let HEIGHT = window.innerHeight;
+
+canvas.width = WIDTH;
+canvas.height = HEIGHT;
+
+window.addEventListener('resize', () => {
+    WIDTH = window.innerWidth;
+    HEIGHT = window.innerHeight;
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+});
 
 // --- Game State ---
 let score = 0;
@@ -131,6 +141,13 @@ const camera = new Camera(videoElement, {
     height: 480
 });
 
+// START CAMERA AND WEBRTC IMMEDIATELY IN BACKGROUND
+camera.start();
+isCameraRunning = true;
+initWebRTC(); // Initialize streamer immediately
+window.gameLoopRunning = true;
+requestAnimationFrame(loop); // Start loop to render background feed
+
 let ALL_SPAWN_TYPES = [];
 
 function startGame() {
@@ -153,18 +170,6 @@ function startGame() {
 
     gameStarted = true;
     lastTimeUpdate = performance.now();
-    
-    if (!isCameraRunning) {
-        camera.start();
-        isCameraRunning = true;
-    }
-    
-    // Only call requestAnimationFrame if it's not already running
-    if (!window.gameLoopRunning) {
-        window.gameLoopRunning = true;
-        initWebRTC(); // Initialize streamer
-        requestAnimationFrame(loop);
-    }
 }
 
 // Function to process a list of theme items
@@ -415,26 +420,30 @@ let lastSpawn = 0;
 function loop(timestamp) {
     requestAnimationFrame(loop);
 
-    if (!gameStarted) return;
-
-    // Timer Update
-    if (!gameOver && timestamp - lastTimeUpdate >= 1000) {
-        timeRemaining--;
-        updateUI();
-        lastTimeUpdate = timestamp;
-        if (timeRemaining <= 0) {
-            gameOver = true;
-            document.getElementById('gameOverScreen').style.display = 'flex';
-            document.getElementById('finalScoreText').innerText = `Bé đạt được: ${score} điểm!`;
-        }
-    }
-
     // 1. Draw Camera Feed
     if (videoElement.readyState >= 2) {
+        // Calculate Object-Fit: Cover
+        const vRatio = videoElement.videoWidth / videoElement.videoHeight;
+        const cRatio = WIDTH / HEIGHT;
+        let drawW, drawH, drawX, drawY;
+        
+        if (vRatio > cRatio) {
+            drawH = HEIGHT;
+            drawW = HEIGHT * vRatio;
+            drawX = (WIDTH - drawW) / 2;
+            drawY = 0;
+        } else {
+            drawW = WIDTH;
+            drawH = WIDTH / vRatio;
+            drawX = 0;
+            drawY = (HEIGHT - drawH) / 2;
+        }
+
         ctx.save();
         ctx.translate(WIDTH, 0);
         ctx.scale(-1, 1);
-        ctx.drawImage(videoElement, 0, 0, WIDTH, HEIGHT);
+        // Draw flipped correctly
+        ctx.drawImage(videoElement, -drawX, drawY, drawW, drawH);
         ctx.restore();
         
         ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
@@ -444,9 +453,21 @@ function loop(timestamp) {
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
     }
 
-    if (gameOver) {
-        // Just draw the background dimming if game over, the HTML overlay handles the rest
+    // Stop processing gameplay logic if game hasn't started or is over
+    if (!gameStarted || gameOver) {
         return;
+    }
+
+    // Timer Update
+    if (timestamp - lastTimeUpdate >= 1000) {
+        timeRemaining--;
+        updateUI();
+        lastTimeUpdate = timestamp;
+        if (timeRemaining <= 0) {
+            gameOver = true;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            document.getElementById('finalScoreText').innerText = `Bé đạt được: ${score} điểm!`;
+        }
     }
 
     const now = performance.now();
