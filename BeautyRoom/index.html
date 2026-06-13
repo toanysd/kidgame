@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Phòng Làm Đẹp - Beauty Room</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../index.css?v=1781388288898">
+    <link rel="stylesheet" href="style.css?v=1781388288898">
+
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    
+    <!-- Three.js for WebGL Shader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 1. Video and Render Canvas -->
+        <video id="videoElement" playsinline autoplay muted></video>
+        <!-- The main WebGL canvas that renders the distorted video -->
+        <canvas id="webglCanvas"></canvas>
+        <!-- The 2D canvas for UI overlays (like snapshot flash) -->
+        <canvas id="uiCanvas"></canvas>
+
+        <!-- 2. UI Controls -->
+        <div class="top-bar">
+            <button id="closeGameBtn" class="home-btn" onclick="window.location.href='../index.html'">🏠 Về trang chủ</button>
+            <div class="lang-selector">
+                <button class="lang-btn active">VN</button>
+                <button class="lang-btn">EN</button>
+            </div>
+            <button class="refresh-btn" onclick="window.location.reload()">🔄</button>
+        </div>
+
+        <!-- Notification Banner -->
+        <div id="notificationBanner" class="notification-banner hidden">
+            ✨ Đang khởi động AI Beauty...
+        </div>
+
+        <!-- Privacy Badge -->
+        <div class="privacy-badge">🔒 Xử lý ảnh tại máy - 100% Không lưu trữ</div>
+
+        <div class="main-ui">
+            <div class="side-actions">
+                <div class="action-btn" onclick="takeSnapshot()">📸</div>
+                <div class="action-btn" onclick="toggleBeautyPanel()" style="background: rgba(255,126,179,0.5)">✨</div>
+            </div>
+
+            <!-- Beauty Sliders Panel -->
+            <div id="beautyPanel" class="beauty-panel hidden">
+                <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 class="panel-title">Tùy Chỉnh Làm Đẹp</h3>
+                    <button class="close-modal-btn" onclick="toggleBeautyPanel()" style="position:static; margin-bottom:10px;">×</button>
+                </div>
+                
+                <div class="panel-tabs">
+                    <button id="btn-tab-presets" class="tab-btn active" onclick="switchTab('presets')">Bộ Lọc Nhanh</button>
+                    <button id="btn-tab-manual" class="tab-btn" onclick="switchTab('manual')">Chỉnh Tay</button>
+                </div>
+
+                <!-- Presets Tab -->
+                <div id="tab-presets" class="tab-content">
+                    <div class="preset-grid">
+                        <button class="preset-btn" onclick="applyPreset('natural')">🌱<br>Mặt Mộc</button>
+                        <button class="preset-btn" onclick="applyPreset('muse')">🌸<br>Nàng Thơ</button>
+                        <button class="preset-btn" onclick="applyPreset('edgy')">🦋<br>Cá Tính</button>
+                        <button class="preset-btn" onclick="applyPreset('baby')">👶<br>Baby Face</button>
+                    </div>
+                </div>
+
+                <!-- Manual Tab -->
+                <div id="tab-manual" class="tab-content hidden">
+                    <div class="slider-group">
+                        <label><span>V-Line (Gọt cằm)</span> <span id="val-vline">0%</span></label>
+                        <input type="range" id="slider-vline" min="0" max="100" value="0">
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label><span>Mắt To</span> <span id="val-eyes">0%</span></label>
+                        <input type="range" id="slider-eyes" min="0" max="100" value="0">
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label><span>Mũi Nhỏ</span> <span id="val-nose">0%</span></label>
+                        <input type="range" id="slider-nose" min="0" max="100" value="0">
+                    </div>
+
+                    <div class="slider-group">
+                        <label><span>Má Phính (Baby)</span> <span id="val-fat">0%</span></label>
+                        <input type="range" id="slider-fat" min="0" max="100" value="0">
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label><span>Mịn Da & Trắng Hồng</span> <span id="val-skin">50%</span></label>
+                        <input type="range" id="slider-skin" min="0" max="100" value="50">
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label><span>Son Môi</span> <span id="val-lips">0%</span></label>
+                        <input type="range" id="slider-lips" min="0" max="100" value="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Snapshot Flash -->
+        <div id="flashOverlay" class="flash-overlay"></div>
+    </div>
+
+    <!-- Snapshot Modal -->
+    <div id="snapshotModal" class="snapshot-modal">
+        <div class="snapshot-content">
+            <div class="snapshot-header">
+                <h2>Ảnh của bé</h2>
+                <button class="close-modal-btn" onclick="closeSnapshot()">×</button>
+            </div>
+            <img id="snapshotImg" alt="Bản chụp">
+            <div class="snapshot-actions">
+                <a id="downloadBtn" download="kidgame_beauty.png" class="btn primary-btn">Tải xuống</a>
+                <button class="btn secondary-btn" onclick="closeSnapshot()">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=1781388288898"></script>
+</body>
+</html>

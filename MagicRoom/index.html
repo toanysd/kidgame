@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Magic Room AR</title>
+    <!-- Mediapipe Camera Utils -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <!-- Mediapipe Selfie Segmentation -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+    <!-- Mediapipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: 'Be Vietnam Pro', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: white;
+            touch-action: none;
+        }
+        #gameCanvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 1;
+        }
+        #ui {
+            position: absolute;
+            top: calc(env(safe-area-inset-top) + 20px);
+            right: 20px;
+            font-size: 28px;
+            font-weight: 800;
+            pointer-events: none;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            color: #fff;
+            text-align: right;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            font-family: 'Be Vietnam Pro', cursive;
+            color: #fff;
+            text-shadow: 0 5px 15px rgba(255,105,180, 0.8);
+            pointer-events: none;
+            text-align: center;
+            z-index: 40;
+            animation: pulse 1.5s infinite alternate;
+        }
+        @keyframes pulse {
+            from { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+            to { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+        }
+        #backBtn {
+            position: absolute;
+            top: calc(env(safe-area-inset-top) + 20px);
+            left: 20px;
+            padding: 10px 20px;
+            font-size: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: #fff;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            z-index: 40;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            transition: all 0.2s;
+        }
+        #backBtn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: calc(env(safe-area-inset-bottom) + 20px);
+            left: 0;
+            width: 100%;
+            display: flex;
+            gap: 15px;
+            padding: 10px 20px;
+            z-index: 20;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-x;
+        }
+        .controls::-webkit-scrollbar {
+            display: none;
+        }
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: rgba(255, 105, 180, 0.6);
+            border-color: #ff69b4;
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) {
+            #ui {
+                top: calc(env(safe-area-inset-top) + 10px);
+                right: 10px;
+                left: 10px;
+                text-align: center;
+                font-size: 20px;
+                padding: 10px;
+                margin-top: 40px; /* Avoid overlap with back btn */
+            }
+            .filter-btn {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+            #loading { font-size: 24px; }
+            #backBtn { top: calc(env(safe-area-inset-top) + 10px); left: 10px; padding: 5px 10px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <a id="backBtn" href="#" onclick="if(window.parent !== window){window.parent.postMessage('close_game', '*');} else {window.location.href='../index.html';} return false;">← Về trang chủ</a>
+    
+    <div id="ui">
+        <div id="statusText">Giơ tay lên để kéo rèm!</div>
+    </div>
+    
+    <div id="loading">Đang tải phép thuật... ✨</div>
+    
+    <div class="controls">
+        <button class="filter-btn active" data-effect="rain">🌧️ Mưa Nảy</button>
+        <button class="filter-btn" data-effect="aura">✨ Hào Quang</button>
+        <button class="filter-btn" data-effect="snow">❄️ Tuyết Rơi</button>
+        <button class="filter-btn" data-effect="fireworks">🎆 Pháo Hoa</button>
+        <button class="filter-btn" data-effect="confetti">🎊 Pháo Giấy</button>
+        <button class="filter-btn" data-effect="bubbles">🫧 Bong Bóng</button>
+        <button class="filter-btn" data-effect="bats">🦇 Dơi Bay</button>
+        <button class="filter-btn" data-effect="hearts">💖 Trái Tim</button>
+        <button class="filter-btn" data-effect="butterflies">🦋 Bướm Bay</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        if (window.parent !== window) {
+            document.getElementById('backBtn').style.display = 'none';
+        }
+    </script>
+    <script src="app.js?v=1781388288898"></script>
+</body>
+</html>

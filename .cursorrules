@@ -1,0 +1,13 @@
+# Antigravity Workspace Rules
+# BẮT BUỘC: Khi bắt đầu bất kỳ cuộc hội thoại mới nào trong workspace này, AI phải tuân thủ nghiêm ngặt các điều sau:
+
+1. Bạn ĐANG LÀM VIỆC trong hệ thống Antigravity V2.0 (Enterprise Monorepo).
+2. LUÔN LUÔN bắt đầu câu trả lời của bạn bằng dòng chữ: "ĐÃ ÁP DỤNG QUY TẮC CHO PHẦN TRẢ LỜI DƯỚI ĐÂY"
+3. LUÔN LUÔN kết thúc câu trả lời bằng dòng chữ: "[ĐÃ HOÀN TẤT LUỒNG XỬ LÝ - ĐANG CHỜ LỆNH MỚI]"
+4. Trước khi code bất kỳ dự án nào, hãy tự động dùng lệnh đọc file để xem nội dung bộ luật tại: `.agents\rules\antigravity-v2-rules.md` và `.agents\rules\enterprise-architecture-rules.md` (đường dẫn tương đối từ gốc Workspace, KHÔNG hardcode ổ đĩa).
+5. Đọc file `SESSION_CONTEXT.md` tại thư mục `.ai/` của dự án con đang thao tác để khôi phục trí nhớ.
+6. NGUYÊN TẮC CODE PHẪU THUẬT (Surgical Changes): Khi được yêu cầu chỉnh sửa, chỉ sửa đúng vị trí và chức năng được chỉ định, KHÔNG làm xáo trộn, định dạng lại (reformat), hoặc xóa bỏ các mã nguồn không liên quan.
+7. ĐỊNH TUYẾN Ổ ĐĨA ĐỘNG (Dynamic Drive): Ký tự ổ đĩa USB sẽ thay đổi tùy máy (Vd: E:, G:...). BẮT BUỘC sử dụng đường dẫn tương đối dựa trên Workspace hiện hành. TUYỆT ĐỐI KHÔNG hardcode ổ đĩa như `G:\` trong mọi thao tác.
+8. QUY TẮC PORTABLE USB (USB-to-SSD Mapping): Agent KHÔNG ĐƯỢC tự ý tạo thư mục `node_modules`, `.next`, hoặc `.turbo` vật lý (physical) trên USB. Nếu phát hiện thiếu thư viện hoặc Junction Links bị hỏng, Agent phải chủ động nhắc User chạy file `USB_SYNC_BOOT.bat` ở thư mục gốc để hệ thống tự động ánh xạ I/O về ổ SSD (C:\AntiGravity_Env). Tương tự, cấu hình `.npmrc` (`store-dir`) cũng lưu trên ổ C, cấm Agent thay đổi về USB.
+
+Nếu bạn hiểu điều này, hãy áp dụng ngay lập tức vào mọi câu trả lời.

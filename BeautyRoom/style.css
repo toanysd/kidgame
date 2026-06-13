@@ -1,0 +1,235 @@
+/* BeautyRoom/style.css */
+body, html {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden;
+    background-color: #000;
+}
+
+#videoElement {
+    display: none; /* We use WebGL canvas to draw the video */
+}
+
+#webglCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    /* Flipped horizontally by default to act as a mirror */
+    transform: scaleX(-1);
+}
+
+#uiCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.top-bar {
+    z-index: 10;
+}
+
+.main-ui {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.side-actions {
+    position: absolute;
+    right: 20px;
+    bottom: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    pointer-events: auto;
+}
+
+.action-btn {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex; justify-content: center; align-items: center;
+    font-size: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 2px solid rgba(255,255,255,0.4);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:active {
+    transform: scale(0.9);
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.beauty-panel {
+    width: 100%;
+    max-width: 500px;
+    background: rgba(20, 20, 25, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top-left-radius: 30px;
+    border-top-right-radius: 30px;
+    padding: 20px 25px 30px 25px;
+    box-sizing: border-box;
+    pointer-events: auto;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    color: white;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.panel-title {
+    margin: 0 0 10px 0;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffb6c1;
+}
+
+.slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.slider-group label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #ddd;
+}
+
+.slider-group span:last-child {
+    font-weight: bold;
+    color: #ff7eb3;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #ff7eb3;
+    cursor: pointer;
+    margin-top: -8px;
+    box-shadow: 0 0 10px rgba(255, 126, 179, 0.5);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+input[type=range]:focus {
+    outline: none;
+}
+
+.privacy-badge {
+    position: absolute;
+    top: 60px; /* Below top bar */
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.panel-tabs {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    padding: 4px;
+}
+
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #ccc;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 0;
+    border-radius: 16px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #ff7eb3 0%, #ff758c 100%);
+    color: white;
+    box-shadow: 0 4px 10px rgba(255, 126, 179, 0.4);
+}
+
+.tab-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.preset-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.preset-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 15px 10px;
+    color: white;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.preset-btn:active {
+    transform: scale(0.95);
+    background: rgba(255, 126, 179, 0.3);
+    border-color: #ff7eb3;
+}
+
+.hidden { display: none !important; }

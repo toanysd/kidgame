@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>KidGame - AR Ecosystem</title>
+    <!-- Mediapipe Camera Utils & Face Mesh -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <!-- Three.js cho Đồ họa 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
+        body, html { 
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; 
+            touch-action: none;
+            background: #000;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: #fff;
+        }
+        #videoElement { display: none; }
+        #webglCanvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2; pointer-events: none;
+        }
+        #renderCanvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 1; pointer-events: none;
+        }
+
+        /* TikTok-style UI Overlay */
+        #uiOverlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: none; /* Let canvas handle some clicks if needed */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: auto;
+        }
+        .back-btn {
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        /* Right Side Actions */
+        .side-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        .action-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255,255,255,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .action-btn:active { transform: scale(0.9); }
+
+        /* Bottom Info & Carousel */
+        .bottom-section {
+            padding: 20px 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .plugin-info {
+            padding: 0 20px;
+        }
+        .plugin-name {
+            font-size: 24px;
+            font-weight: 800;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .plugin-desc {
+            font-size: 14px;
+            color: #ddd;
+        }
+        
+        /* Filter Carousel */
+        .filter-carousel {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding: 10px 20px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-x; /* Cho phép vuốt ngang trên điện thoại */
+        }
+        .filter-carousel::-webkit-scrollbar {
+            display: none;
+        }
+        .filter-btn {
+            min-width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 3px solid transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+        .filter-btn.active {
+            border-color: #ec4899;
+            transform: scale(1.1);
+            background: rgba(255,255,255,0.4);
+        }
+
+        #loading {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 24px; z-index: 50;
+            background: rgba(0,0,0,0.7); padding: 15px 25px; border-radius: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 1. Background video element (hidden) -->
+    <video id="videoElement" playsinline autoplay muted></video>
+
+    <!-- 2. WebGL Canvas for distorted background video (placed behind 2D canvas) -->
+    <canvas id="bgWebglCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;transform:scaleX(-1);"></canvas>
+
+    <!-- 3. Canvas 2D for overlays (scores, donuts, etc) -->
+    <canvas id="renderCanvas" style="z-index:2;position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
+
+    <!-- 4. WebGL Canvas for 3D objects (hats, glasses) -->
+    <canvas id="webglCanvas" style="z-index:3;position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
+
+    <div id="loading">Khởi động AI Core... ⏳</div>
+
+    <div id="uiOverlay">
+        <div class="top-bar">
+            <!-- Nút đóng đã bị xóa vì index.html gốc đã có nút Về Nhà -->
+            <div style="flex-grow: 1;"></div>
+            
+            <div class="side-actions">
+                <div class="action-btn" onclick="takeSnapshot()">📸</div>
+                <!-- Removed switch camera button since it's not working -->
+            </div>
+        </div>
+
+        <div class="bottom-section">
+            <div class="plugin-info">
+                <div id="pluginName" class="plugin-name">Loading...</div>
+                <div id="pluginDesc" class="plugin-desc">Please wait.</div>
+            </div>
+            
+            <div class="filter-carousel" id="filterCarousel">
+                <!-- Filter buttons injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Core -->
+    <script src="core.js?v=1781388288898"></script>
+</body>
+</html>

