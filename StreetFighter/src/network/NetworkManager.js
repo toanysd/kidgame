@@ -38,7 +38,7 @@ export class NetworkManager {
         this.isHost = true;
         this.localStream = localStream;
         const shortCode = Math.floor(1000 + Math.random() * 9000).toString();
-        const roomId = `SF-${shortCode}`;
+        const roomId = shortCode;
         this.roomId = roomId;
 
         this.setStatus(`Đang khởi tạo phòng [${roomId}]...`);

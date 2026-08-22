@@ -321,6 +321,8 @@
     return false;
   };
   var handleKeyDown = (event) => {
+    if (event.target && event.target.tagName === "INPUT")
+      return;
     if (!mappedKeys.includes(event.code))
       return;
     event.preventDefault();
@@ -329,6 +331,10 @@
     }
   };
   var handleKeyUp = (event) => {
+    if (event.target && event.target.tagName === "INPUT")
+      return;
+    if (!mappedKeys.includes(event.code))
+      return;
     event.preventDefault();
     if (heldKeys.has(event.code)) {
       heldKeys.delete(event.code);
@@ -5597,7 +5603,7 @@
       this.isHost = true;
       this.localStream = localStream;
       const shortCode = Math.floor(1e3 + Math.random() * 9e3).toString();
-      const roomId = `SF-${shortCode}`;
+      const roomId = shortCode;
       this.roomId = roomId;
       this.setStatus(`\u0110ang kh\u1EDFi t\u1EA1o ph\xF2ng [${roomId}]...`);
       this.initPeer(roomId, () => {

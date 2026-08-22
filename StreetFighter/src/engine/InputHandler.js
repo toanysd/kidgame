@@ -65,6 +65,7 @@ const isPressedControlHistory = (id, code) => {
 };
 
 const handleKeyDown = (event) => {
+	if (event.target && event.target.tagName === 'INPUT') return;
 	if (!mappedKeys.includes(event.code)) return;
 	event.preventDefault();
 	if (!heldKeys.has(event.code)) {
@@ -73,6 +74,8 @@ const handleKeyDown = (event) => {
 };
 
 const handleKeyUp = (event) => {
+	if (event.target && event.target.tagName === 'INPUT') return;
+	if (!mappedKeys.includes(event.code)) return; // Don't prevent default on keys we don't care about
 	event.preventDefault();
 	if (heldKeys.has(event.code)) {
 		heldKeys.delete(event.code);
