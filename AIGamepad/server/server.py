@@ -1,27 +1,33 @@
-﻿import asyncio
+import asyncio
 import json
 import logging
 import sys
 
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 try:
     import websockets
 except ImportError:
-    print("Lỗi: Thiếu thư viện websockets.")
-    input("Nhấn Enter để thoát...")
+    print("[LOI] Thieu thu vien websockets.")
+    input("Nhan Enter de thoat...")
     sys.exit(1)
 
 try:
     import pydirectinput as kbd
-    print("Sử dụng PyDirectInput (Tương thích tốt với mọi game PC, DirectX)")
+    print("-> Su dung PyDirectInput (Tuong thich tot voi moi game PC, DirectX)")
     kbd.FAILSAFE = False
 except ImportError:
     try:
         import pyautogui as kbd
-        print("Sử dụng PyAutoGUI (Dành cho web game và giả lập cơ bản)")
+        print("-> Su dung PyAutoGUI (Web game va gia lap co ban)")
         kbd.FAILSAFE = False
     except ImportError:
-        print("Lỗi: Thiếu thư viện điều khiển (pydirectinput / pyautogui).")
-        input("Nhấn Enter để thoát...")
+        print("[LOI] Thieu thu vien dieu khien (pydirectinput / pyautogui).")
+        input("Nhan Enter de thoat...")
         sys.exit(1)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -82,26 +88,26 @@ async def handler(websocket):
 
 async def main():
     print("==================================================")
-    print("🚀 AI GAMEPAD SERVER ĐANG CHẠY")
+    print("AI GAMEPAD SERVER DANG CHAY")
     print("==================================================")
-    print("Đang lắng nghe kết nối từ Web AI Gamepad (Port 8765)...")
-    print("Hãy giữ nguyên cửa sổ này trong lúc chơi game!")
-    print("Nhấn Ctrl + C để thoát.")
+    print("Dang lang nghe ket noi tu Web AI Gamepad (Port 8765)...")
+    print("Hay giu nguyen cua so nay trong luc choi game!")
+    print("Nhan Ctrl + C de thoat.")
     print("--------------------------------------------------")
     
     try:
         async with websockets.serve(handler, "localhost", 8765):
             await asyncio.Future()  # run forever
     except OSError as e:
-        print(f"\n❌ LỖI: Không thể mở cổng 8765. Có thể một Server khác đang chạy.")
-        print(f"Chi tiết lỗi: {e}")
-        input("\nNhấn Enter để thoát...")
+        print(f"\n[LOI]: Khong the mo cong 8765. Co the mot Server khac dang chay.")
+        print(f"Chi tiet loi: {e}")
+        input("\nNhan Enter de thoat...")
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\nĐã đóng Server.")
+        print("\nDa dong Server.")
     except Exception as e:
-        print(f"\nĐã xảy ra lỗi hệ thống: {e}")
-        input("\nNhấn Enter để thoát...")
+        print(f"\nDa xay ra loi he thong: {e}")
+        input("\nNhan Enter de thoat...")
