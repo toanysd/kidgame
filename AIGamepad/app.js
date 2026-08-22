@@ -358,16 +358,49 @@ function processGestures(pl) {
         triggerAction('duck', false);
     }
 
-    // 2. LEAN LEFT & RIGHT
-    const shoulderX = (leftShoulder.x + rightShoulder.x) / 2;
-    const hipX = (leftHip && rightHip) ? (leftHip.x + rightHip.x) / 2 : shoulderX;
+    // 2. LEAN LEFT & RIGHT (Steering Modes)
+    let steerVal = 0; // -1 (Right) to 1 (Left)
+    const modeEl = document.getElementById('steerMode');
+    const mode = (modeEl && modeEl.style.display !== 'none') ? modeEl.value : 'lean';
     
-    const leanDelta = shoulderX - hipX;
-    // Mirrored camera: x increases to the left visually
-    if (leanDelta > 0.05) {
+    // A. Lean (Nghiêng Người)
+    if (mode === 'lean' || mode === 'all') {
+        const shoulderX = (leftShoulder.x + rightShoulder.x) / 2;
+        const hipX = (leftHip && rightHip) ? (leftHip.x + rightHip.x) / 2 : shoulderX;
+        const leanDelta = shoulderX - hipX;
+        if (leanDelta > 0.05) steerVal = 1;
+        else if (leanDelta < -0.05) steerVal = -1;
+    }
+    
+    // B. Steering Wheel (Cầm Vô Lăng Tay)
+    if ((mode === 'wheel' || mode === 'all') && steerVal === 0) {
+        if (leftWrist && rightWrist && leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
+            // Check if hands are raised (above hips/chest)
+            if (leftWrist.y < leftShoulder.y + 0.2 && rightWrist.y < rightShoulder.y + 0.2) {
+                // Determine steering by height difference of hands
+                const heightDiff = rightWrist.y - leftWrist.y;
+                if (heightDiff > 0.12) steerVal = 1; // Left hand higher -> steering Left (mirrored)
+                else if (heightDiff < -0.12) steerVal = -1; // Right hand higher -> steering Right
+            }
+        }
+    }
+    
+    // C. Head Tilt (Nghiêng Đầu)
+    if ((mode === 'head' || mode === 'all') && steerVal === 0) {
+        const leftEar = pl[7];
+        const rightEar = pl[8];
+        if (leftEar && rightEar) {
+            const headAngle = Math.atan2(rightEar.y - leftEar.y, rightEar.x - leftEar.x);
+            // headAngle normal is ~0. If leaning left (mirrored), left ear is lower (higher Y), so angle > 0.1
+            if (headAngle > 0.15) steerVal = 1;
+            else if (headAngle < -0.15) steerVal = -1;
+        }
+    }
+
+    if (steerVal === 1) {
         triggerAction('left', true);
         triggerAction('right', false);
-    } else if (leanDelta < -0.05) {
+    } else if (steerVal === -1) {
         triggerAction('right', true);
         triggerAction('left', false);
     } else {
@@ -429,6 +462,42 @@ function startArcade(gameUrl) {
     setupModal.style.display = 'none';
     connStatus.classList.add('connected');
     connText.innerText = "Chế độ Arcade";
+
+    // Contextual UI Configuration
+    const mapJump = document.getElementById('map-jump');
+    const mapDuck = document.getElementById('map-duck');
+    const mapLeft = document.getElementById('map-left');
+    const mapRight = document.getElementById('map-right');
+    const mapPunchL = document.getElementById('map-punchL');
+    const mapPunchR = document.getElementById('map-punchR');
+    const steerConfig = document.getElementById('steeringConfig');
+
+    if (gameUrl.includes('racing.html')) {
+        steerConfig.style.display = 'block';
+        mapJump.style.display = 'flex';
+        mapDuck.style.display = 'flex';
+        mapLeft.style.display = 'flex';
+        mapRight.style.display = 'flex';
+        mapPunchL.style.display = 'none';
+        mapPunchR.style.display = 'none';
+    } else if (gameUrl.includes('drum.html')) {
+        steerConfig.style.display = 'none';
+        mapJump.style.display = 'none';
+        mapDuck.style.display = 'none';
+        mapLeft.style.display = 'none';
+        mapRight.style.display = 'none';
+        mapPunchL.style.display = 'flex';
+        mapPunchR.style.display = 'flex';
+    } else {
+        // default
+        steerConfig.style.display = 'none';
+        mapJump.style.display = 'flex';
+        mapDuck.style.display = 'flex';
+        mapLeft.style.display = 'flex';
+        mapRight.style.display = 'flex';
+        mapPunchL.style.display = 'flex';
+        mapPunchR.style.display = 'flex';
+    }
     
     initCamera();
 

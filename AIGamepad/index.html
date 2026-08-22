@@ -31,42 +31,53 @@
                 <h2>Cài Đặt Nút Bấm</h2>
                 <p>Nhấp vào ô vuông để đổi phím</p>
             </div>
+
+            <!-- Steering Configuration -->
+            <div id="steeringConfig" style="display: none; padding: 15px; background: #334155; margin: 15px; border-radius: 10px;">
+                <label style="font-size: 14px; font-weight: bold; color: #38bdf8;">Chế độ bẻ lái Trái/Phải:</label>
+                <select id="steerMode" style="width: 100%; padding: 8px; margin-top: 8px; border-radius: 6px; background: #0f172a; color: white; border: 1px solid #475569;">
+                    <option value="all">Tất cả (Vô lăng + Đầu + Nghiêng)</option>
+                    <option value="wheel">Cầm Vô Lăng (Tay)</option>
+                    <option value="head">Nghiêng Đầu</option>
+                    <option value="lean">Nghiêng Người</option>
+                </select>
+            </div>
             
             <div class="mapping-list">
                 <!-- Jump -->
-                <div class="map-item">
+                <div class="map-item" id="map-jump">
                     <div class="map-info">
                         <span class="map-icon">⬆️</span>
-                        <span class="map-name">Nhảy (Jump)</span>
+                        <span class="map-name">Nhảy / Ga (Jump)</span>
                     </div>
                     <input type="text" class="key-input" id="key-jump" value="w" readonly>
                 </div>
                 <!-- Duck -->
-                <div class="map-item">
+                <div class="map-item" id="map-duck">
                     <div class="map-info">
                         <span class="map-icon">⬇️</span>
-                        <span class="map-name">Ngồi (Duck)</span>
+                        <span class="map-name">Ngồi / Phanh (Duck)</span>
                     </div>
                     <input type="text" class="key-input" id="key-duck" value="s" readonly>
                 </div>
                 <!-- Lean Left -->
-                <div class="map-item">
+                <div class="map-item" id="map-left">
                     <div class="map-info">
                         <span class="map-icon">⬅️</span>
-                        <span class="map-name">Nghiêng Trái</span>
+                        <span class="map-name">Sang Trái</span>
                     </div>
                     <input type="text" class="key-input" id="key-left" value="a" readonly>
                 </div>
                 <!-- Lean Right -->
-                <div class="map-item">
+                <div class="map-item" id="map-right">
                     <div class="map-info">
                         <span class="map-icon">➡️</span>
-                        <span class="map-name">Nghiêng Phải</span>
+                        <span class="map-name">Sang Phải</span>
                     </div>
                     <input type="text" class="key-input" id="key-right" value="d" readonly>
                 </div>
                 <!-- Punch Left -->
-                <div class="map-item">
+                <div class="map-item" id="map-punchL">
                     <div class="map-info">
                         <span class="map-icon">🥊</span>
                         <span class="map-name">Đấm Trái</span>
@@ -74,7 +85,7 @@
                     <input type="text" class="key-input" id="key-punchL" value="j" readonly>
                 </div>
                 <!-- Punch Right -->
-                <div class="map-item">
+                <div class="map-item" id="map-punchR">
                     <div class="map-info">
                         <span class="map-icon">🥊</span>
                         <span class="map-name">Đấm Phải</span>

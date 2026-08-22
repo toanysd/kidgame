@@ -7,17 +7,23 @@
     <style>
         body { margin: 0; overflow: hidden; background: #22c55e; color: white; font-family: sans-serif; }
         canvas { display: block; margin: 0 auto; background: #334155; }
-        #ui { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); font-size: 24px; font-weight: bold; text-shadow: 2px 2px 0 #000; pointer-events: none; }
+        #ui { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); font-size: 24px; font-weight: bold; text-shadow: 2px 2px 0 #000; pointer-events: none; text-align: center; }
         #gameOver { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15, 23, 42, 0.9); padding: 40px; border-radius: 20px; text-align: center; border: 4px solid #f87171; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .btn-restart { background: #f87171; color: white; border: none; padding: 15px 30px; font-size: 20px; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 20px; box-shadow: 0 5px 0 #b91c1c; }
         .btn-restart:active { transform: translateY(5px); box-shadow: none; }
+        .flash { animation: flashRed 0.5s ease; }
+        @keyframes flashRed { 0% { background: #ef4444; } 100% { background: #22c55e; } }
     </style>
 </head>
 <body>
-    <div id="ui">ĐIỂM: <span id="score">0</span> <br><span style="font-size: 16px; color: #fbbf24;">Tốc độ: <span id="speedDisplay">1.0</span>x</span></div>
+    <div id="ui">
+        ĐIỂM: <span id="score">0</span> <br>
+        <span style="font-size: 16px; color: #fbbf24;">Tốc độ: <span id="speedDisplay">1.0</span>x</span> <br>
+        <span style="font-size: 20px; color: #38bdf8;">⏱️ <span id="timerDisplay">02:00</span></span>
+    </div>
     <div id="gameOver">
-        <h1 style="color: #f87171; margin-top:0;">💥 RẦM! ĐỤNG RỒI!</h1>
-        <p style="font-size: 20px;">Điểm của bé: <span id="finalScore" style="color: #fbbf24; font-size: 24px; font-weight: bold;">0</span></p>
+        <h1 style="color: #f87171; margin-top:0;">🏁 HẾT GIỜ!</h1>
+        <p style="font-size: 20px;">Tổng điểm của bé: <span id="finalScore" style="color: #fbbf24; font-size: 24px; font-weight: bold;">0</span></p>
         <button class="btn-restart" onclick="restart()">🔄 CHƠI LẠI (Nhấn SPACE)</button>
     </div>
     <canvas id="gameCanvas"></canvas>
@@ -32,7 +38,10 @@
         let obstacles = [];
         let score = 0;
         let gameActive = true;
-        let speedMult = 1;
+        let speedMult = 1.0;
+        let timeLeft = 120; // 2 minutes
+        let invulnerable = 0; // ms remaining
+        let lastTime = Date.now();
 
         let keys = { a: false, d: false, w: false, s: false, arrowleft: false, arrowright: false, arrowup: false, arrowdown: false };
 
@@ -56,7 +65,7 @@
             }
         });
         
-        // Add touch/click support for moving
+        // Touch support
         window.addEventListener('touchstart', handleTouch);
         window.addEventListener('mousedown', handleTouch);
         function handleTouch(e) {
@@ -70,30 +79,65 @@
 
         function spawnObstacle() {
             if (!gameActive) return;
-            const isCar = Math.random() > 0.3;
-            const width = isCar ? 60 : 70;
-            const height = isCar ? 100 : 70;
+            
+            const r = Math.random();
+            let type = 'vehicle'; // default
+            if (r > 0.8) type = 'item';
+            else if (r > 0.6) type = 'obstacle';
+
+            const width = (type === 'vehicle') ? 60 : 50;
+            const height = (type === 'vehicle') ? 100 : 50;
             const x = 50 + Math.random() * (canvas.width - width - 100);
             
-            let emoji = isCar ? ['🚓', '🚕', '🚙'][Math.floor(Math.random()*3)] : ['🚧', '🪨'][Math.floor(Math.random()*2)];
+            let emoji = '';
+            if (type === 'vehicle') emoji = ['🚓', '🚕', '🚙', '🚚'][Math.floor(Math.random()*4)];
+            else if (type === 'item') emoji = ['⭐', '🍎', '🍌', '🍉', '🍓'][Math.floor(Math.random()*5)];
+            else emoji = ['🚧', '🪨', '🪵'][Math.floor(Math.random()*3)];
             
-            obstacles.push({ x: x, y: -100, width: width, height: height, emoji: emoji, isCar: isCar });
-            setTimeout(spawnObstacle, 1000 + Math.random() * 1000 / Math.max(speedMult, 0.5));
+            obstacles.push({ x: x, y: -100, width: width, height: height, emoji: emoji, type: type, passed: false });
+            
+            setTimeout(spawnObstacle, 800 + Math.random() * 1000 / Math.max(speedMult, 0.5));
         }
 
-        function drawEmoji(emoji, x, y, size) {
+        function drawEmoji(emoji, x, y, size, alpha=1) {
+            ctx.save();
+            ctx.globalAlpha = alpha;
             ctx.font = size + "px Arial";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText(emoji, x + size/2, y + size/2);
+            ctx.restore();
+        }
+        
+        function formatTime(s) {
+            const min = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return (min < 10 ? '0' : '') + min + ':' + (sec < 10 ? '0' : '') + sec;
         }
 
         function loop() {
             if (!gameActive) return;
+            
+            const now = Date.now();
+            const dt = now - lastTime;
+            lastTime = now;
+            
+            // Timer logic
+            timeLeft -= dt / 1000;
+            if (timeLeft <= 0) {
+                timeLeft = 0;
+                gameOver();
+            }
+            document.getElementById('timerDisplay').innerText = formatTime(timeLeft);
+            
+            if (invulnerable > 0) {
+                invulnerable -= dt;
+            }
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Draw Road
-            ctx.fillStyle = '#475569'; // darker road
+            ctx.fillStyle = '#475569';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             // Draw Grass borders
@@ -101,63 +145,76 @@
             ctx.fillRect(0, 0, 40, canvas.height);
             ctx.fillRect(canvas.width - 40, 0, 40, canvas.height);
 
-            // Draw Road markings (moving)
+            // Road markings
             ctx.fillStyle = '#f8fafc';
             for(let i=0; i<canvas.height; i+=60) {
                 ctx.fillRect(canvas.width/2 - 5, (i + Date.now()*0.5*speedMult) % canvas.height, 10, 30);
-                
-                // Draw side lines
                 ctx.fillRect(45, (i + Date.now()*0.5*speedMult) % canvas.height, 5, 40);
                 ctx.fillRect(canvas.width - 50, (i + Date.now()*0.5*speedMult) % canvas.height, 5, 40);
             }
 
-            // Draw Scenery (Trees passing by)
+            // Scenery
             for(let i=0; i<canvas.height; i+=150) {
                 drawEmoji('🌲', 5, (i + Date.now()*0.5*speedMult) % canvas.height, 30);
                 drawEmoji('🌲', canvas.width - 35, (i + Date.now()*0.5*speedMult) % canvas.height, 30);
             }
 
-            // Adjust speed with Up/Down
+            // Speed Control
             if (keys.w || keys.arrowup) speedMult += 0.05;
             if (keys.s || keys.arrowdown) speedMult -= 0.05;
-            // Clamp speed (min 0.5, max 4.0)
             if (speedMult < 0.5) speedMult = 0.5;
             if (speedMult > 4.0) speedMult = 4.0;
-            
             document.getElementById('speedDisplay').innerText = speedMult.toFixed(1);
 
-            // Move player car
+            // Move car
             if (keys.a || keys.arrowleft) car.x -= car.speed;
             if (keys.d || keys.arrowright) car.x += car.speed;
-            
-            // Bounds
             if (car.x < 40) car.x = 40;
             if (car.x > canvas.width - 40 - car.width) car.x = canvas.width - 40 - car.width;
 
-            // Draw Player Car
-            drawEmoji('🏎️', car.x - 5, car.y - 10, 70);
+            // Draw Player Car (Blinking if invulnerable)
+            const alpha = (invulnerable > 0 && Math.floor(now / 100) % 2 === 0) ? 0.3 : 1;
+            drawEmoji('🏎️', car.x - 5, car.y - 10, 70, alpha);
 
-            // Obstacles
+            // Obstacles & Items
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let obs = obstacles[i];
                 obs.y += 5 * speedMult;
                 
                 drawEmoji(obs.emoji, obs.x, obs.y, obs.width);
 
-                // Collision Detection (Hitbox reduction for fairness)
-                const hitPadding = 15;
-                if (car.x + hitPadding < obs.x + obs.width - hitPadding && 
-                    car.x + car.width - hitPadding > obs.x + hitPadding &&
-                    car.y + hitPadding < obs.y + obs.height - hitPadding && 
-                    car.y + car.height - hitPadding > obs.y + hitPadding) {
-                    gameOver();
+                // Collision Detection
+                const padding = 10;
+                if (car.x + padding < obs.x + obs.width - padding && 
+                    car.x + car.width - padding > obs.x + padding &&
+                    car.y + padding < obs.y + obs.height - padding && 
+                    car.y + car.height - padding > obs.y + padding) {
+                    
+                    if (obs.type === 'item') {
+                        score += 15;
+                        obstacles.splice(i, 1);
+                        document.getElementById('score').innerText = score;
+                        continue;
+                    } else if (invulnerable <= 0) {
+                        // Crash into vehicle or obstacle
+                        document.body.classList.add('flash');
+                        setTimeout(() => document.body.classList.remove('flash'), 500);
+                        score = Math.max(0, score - (obs.type === 'vehicle' ? 10 : 5));
+                        speedMult = 0.5; // slow down on crash
+                        invulnerable = 2000; // 2 seconds iframes
+                        document.getElementById('score').innerText = score;
+                    }
+                }
+
+                // Scoring for passing vehicles safely
+                if (obs.y > car.y + car.height && !obs.passed && obs.type === 'vehicle') {
+                    obs.passed = true;
+                    score += 5;
+                    document.getElementById('score').innerText = score;
                 }
 
                 if (obs.y > canvas.height) {
                     obstacles.splice(i, 1);
-                    score += 10;
-                    speedMult += 0.05;
-                    document.getElementById('score').innerText = score;
                 }
             }
 
@@ -175,15 +232,19 @@
             car.x = 175;
             obstacles = [];
             score = 0;
-            speedMult = 1;
-            keys = { a: false, d: false, arrowleft: false, arrowright: false };
+            speedMult = 1.0;
+            timeLeft = 120;
+            invulnerable = 0;
+            keys = { a: false, d: false, w: false, s: false, arrowleft: false, arrowright: false, arrowup: false, arrowdown: false };
             gameActive = true;
+            lastTime = Date.now();
             document.getElementById('score').innerText = score;
             document.getElementById('gameOver').style.display = 'none';
             loop();
             spawnObstacle();
         }
 
+        lastTime = Date.now();
         loop();
         spawnObstacle();
     </script>
