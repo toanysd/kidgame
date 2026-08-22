@@ -344,30 +344,49 @@ function processGestures(pl) {
     const isJumping = activeKeys.has('jump');
     const isDucking = activeKeys.has('duck');
 
-    // 1. JUMP & DUCK
-    const hipY = (leftHip && rightHip) ? (leftHip.y + rightHip.y) / 2 : null;
-    const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-    const ankleY = (leftAnkle && rightAnkle) ? (leftAnkle.y + rightAnkle.y) / 2 : null;
+    // 1. JUMP & DUCK (Ga / Phanh)
+    const gasModeEl = document.getElementById('gasMode');
+    const gasMode = (gasModeEl && gasModeEl.style.display !== 'none') ? gasModeEl.value : 'head';
+    
+    if (gasMode === 'body') {
+        const hipY = (leftHip && rightHip) ? (leftHip.y + rightHip.y) / 2 : null;
+        const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+        const ankleY = (leftAnkle && rightAnkle) ? (leftAnkle.y + rightAnkle.y) / 2 : null;
 
-    if (hipY && ankleY) {
-        const bodyHeight = ankleY - shoulderY;
-        const legLength = ankleY - hipY;
-        const ratio = legLength / bodyHeight;
-        
-        // Jump hysteresis
-        const jumpThresh = isJumping ? 0.65 : 0.72;
-        if (ratio > jumpThresh && ankleY < 0.8) {
-            triggerAction('jump', true);
-        } else {
-            triggerAction('jump', false);
+        if (hipY && ankleY) {
+            const bodyHeight = ankleY - shoulderY;
+            const legLength = ankleY - hipY;
+            const ratio = legLength / bodyHeight;
+            
+            // Jump hysteresis
+            const jumpThresh = isJumping ? 0.65 : 0.72;
+            if (ratio > jumpThresh && ankleY < 0.8) triggerAction('jump', true);
+            else triggerAction('jump', false);
+            
+            // Duck hysteresis
+            const duckThresh = isDucking ? 0.45 : 0.40;
+            if (ratio < duckThresh) triggerAction('duck', true);
+            else triggerAction('duck', false);
         }
-        
-        // Duck hysteresis
-        const duckThresh = isDucking ? 0.45 : 0.40;
-        if (ratio < duckThresh) {
-            triggerAction('duck', true);
-        } else {
-            triggerAction('duck', false);
+    } else {
+        // Head Pitch (Ngửa / Cúi)
+        const nose = pl[0];
+        const leftEar = pl[7];
+        const rightEar = pl[8];
+        if (nose && leftEar && rightEar) {
+            const earMidY = (leftEar.y + rightEar.y) / 2;
+            const pitchDelta = nose.y - earMidY; 
+            
+            // pitchDelta < 0 means Nose is HIGHER than Ears (Ngửa đầu) -> Ga (Jump)
+            // pitchDelta > 0 means Nose is LOWER than Ears (Cúi đầu) -> Phanh (Duck)
+            
+            const jumpThresh = isJumping ? -0.01 : -0.03;
+            if (pitchDelta < jumpThresh) triggerAction('jump', true);
+            else triggerAction('jump', false);
+            
+            const duckThresh = isDucking ? 0.05 : 0.08;
+            if (pitchDelta > duckThresh) triggerAction('duck', true);
+            else triggerAction('duck', false);
         }
     }
 
@@ -619,3 +638,21 @@ if (toggleVCBtn) {
     });
 }
 
+
+// Speed Slider Logic
+const speedSlider = document.getElementById('speedSlider');
+if (speedSlider) {
+    speedSlider.addEventListener('input', (e) => {
+        const frame = document.getElementById('arcadeFrame');
+        if (frame && frame.contentWindow && window.arcadeMode) {
+            frame.contentWindow.postMessage({ type: 'setSpeed', speed: parseFloat(e.target.value) }, '*');
+        }
+    });
+}
+
+// Listen for speed updates from iframe
+window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'speedUpdated') {
+        if (speedSlider) speedSlider.value = e.data.speed;
+    }
+});

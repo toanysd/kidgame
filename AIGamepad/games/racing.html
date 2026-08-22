@@ -54,13 +54,18 @@
         
         // Listen for postMessage from parent iframe
         window.addEventListener('message', (e) => {
-            if (e.data && e.data.type === 'keyboard') {
-                const k = e.data.key.toLowerCase();
-                if (e.data.action === 'keydown') {
-                    keys[k] = true;
-                    if ((k === ' ' || k === 'space') && !gameActive) restart();
-                } else if (e.data.action === 'keyup') {
-                    keys[k] = false;
+            if (e.data) {
+                if (e.data.type === 'keyboard') {
+                    const k = e.data.key.toLowerCase();
+                    if (e.data.action === 'keydown') {
+                        keys[k] = true;
+                        if ((k === ' ' || k === 'space') && !gameActive) restart();
+                    } else if (e.data.action === 'keyup') {
+                        keys[k] = false;
+                    }
+                } else if (e.data.type === 'setSpeed') {
+                    speedMult = e.data.speed;
+                    document.getElementById('speedDisplay').innerText = speedMult.toFixed(1);
                 }
             }
         });
@@ -160,11 +165,16 @@
             }
 
             // Speed Control
+            let oldSpeed = speedMult;
             if (keys.w || keys.arrowup) speedMult += 0.05;
             if (keys.s || keys.arrowdown) speedMult -= 0.05;
             if (speedMult < 0.5) speedMult = 0.5;
             if (speedMult > 4.0) speedMult = 4.0;
-            document.getElementById('speedDisplay').innerText = speedMult.toFixed(1);
+            
+            if (oldSpeed !== speedMult) {
+                document.getElementById('speedDisplay').innerText = speedMult.toFixed(1);
+                window.parent.postMessage({ type: 'speedUpdated', speed: speedMult }, '*');
+            }
 
             // Move car
             if (keys.a || keys.arrowleft) car.x -= car.speed;
