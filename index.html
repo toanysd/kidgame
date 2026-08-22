@@ -539,6 +539,19 @@
                 <div class="play-btn" id="t_play3">Chơi Ngay!</div>
             </div>
         </div>
+
+        <!-- Virtual AI Gamepad -->
+        <div onclick="openGame('AIGamepad/index.html')" class="game-card" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: white;">
+            <div class="card-image">
+                🎮🤖
+            </div>
+            <div class="card-content">
+                <span class="tag ar" style="background: #38bdf8; color: #0f172a;">PC Controller</span>
+                <h2 class="card-title" style="color: #38bdf8;" id="t_gp_title">Tay Cầm Camera AI</h2>
+                <p class="card-desc" style="color: #cbd5e1;" id="t_gp_desc">Biến chuyển động cơ thể thành nút bấm. Điều khiển mọi game PC (FIFA, Roblox, GTA) bằng Camera!</p>
+                <div class="play-btn" style="background: #38bdf8; color: #0f172a;" id="t_play4">Kết Nối Ngay!</div>
+            </div>
+        </div>
     </div>
 
     <!-- Hidden Game Container -->
@@ -564,6 +577,8 @@
                 sf_desc: "Đứng trước camera đấm đá, chưởng Hadouken! Hỗ trợ 2 người chơi trên 1 camera hoặc đối chiến online 2 máy!",
                 rw_title: "Đấu Trường Rồng & Robot",
                 rw_desc: "Hóa thân thành Siêu Robot, đấm bắn laser và bung khiên diệt Rồng Lửa Titan!",
+                gp_title: "Tay Cầm Camera AI",
+                gp_desc: "Biến chuyển động cơ thể thành nút bấm. Điều khiển mọi game PC (FIFA, Roblox, GTA) bằng Camera!",
                 play: "Chơi Ngay!",
                 soon: "Sắp Ra Mắt",
                 locked: "Chưa mở khóa",
@@ -584,6 +599,8 @@
                 sf_desc: "カメラの前でパンチ＆キック、波動拳！1台のカメラで2人プレイ、または2台の端末でオンライン対戦！",
                 rw_title: "ドラゴン＆ロボットアリーナ",
                 rw_desc: "スーパーロボットに変身し、レーザーとシールドで巨大な火竜タイタンを倒そう！",
+                gp_title: "AIカメラコントローラー",
+                gp_desc: "体の動きをボタンに変換！カメラでPCゲーム（FIFA、Robloxなど）を操作しよう！",
                 play: "あそぶ！",
                 soon: "もうすぐ",
                 locked: "まだあそべない",
@@ -604,6 +621,8 @@
                 sf_desc: "Stand in front of the camera, punch, kick & shoot Hadouken! Supports 2 players on 1 camera or online 1v1 battle!",
                 rw_title: "Dragon & Robot Arena",
                 rw_desc: "Transform into a Super Robot, shoot lasers and raise energy shields to defeat the Titan Fire Dragon!",
+                gp_title: "AI Camera Gamepad",
+                gp_desc: "Turn your body movements into keystrokes. Control any PC game (FIFA, Roblox, GTA) using your Camera!",
                 play: "Play Now!",
                 soon: "Coming Soon",
                 locked: "Locked",
@@ -638,6 +657,8 @@
             document.getElementById('t_sf_desc').innerText = text.sf_desc;
             document.getElementById('t_rw_title').innerText = text.rw_title;
             document.getElementById('t_rw_desc').innerText = text.rw_desc;
+            if (document.getElementById('t_gp_title')) document.getElementById('t_gp_title').innerText = text.gp_title;
+            if (document.getElementById('t_gp_desc')) document.getElementById('t_gp_desc').innerText = text.gp_desc;
             if (document.getElementById('t_soon')) document.getElementById('t_soon').innerText = text.soon;
             if (document.getElementById('t_locked')) document.getElementById('t_locked').innerText = text.locked;
             if (document.getElementById('t_play1')) document.getElementById('t_play1').innerText = text.play;

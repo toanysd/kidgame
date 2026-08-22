@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual AI Gamepad</title>
+    <link rel="stylesheet" href="style.css?v=1.0.0">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="../index.html" class="back-btn">← Trở về Hub</a>
+        <div class="nav-brand">
+            🎮 Virtual AI Gamepad
+        </div>
+        <div class="status-badge" id="connStatus">
+            <div class="dot"></div>
+            <span id="connText">Đang chờ Server...</span>
+        </div>
+    </nav>
+
+    <!-- Main App -->
+    <div class="main-container">
+        
+        <!-- Sidebar: Key Mapping -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Cài Đặt Nút Bấm</h2>
+                <p>Nhấp vào ô vuông để đổi phím</p>
+            </div>
+            
+            <div class="mapping-list">
+                <!-- Jump -->
+                <div class="map-item">
+                    <div class="map-info">
+                        <span class="map-icon">⬆️</span>
+                        <span class="map-name">Nhảy (Jump)</span>
+                    </div>
+                    <input type="text" class="key-input" id="key-jump" value="w" readonly>
+                </div>
+                <!-- Duck -->
+                <div class="map-item">
+                    <div class="map-info">
+                        <span class="map-icon">⬇️</span>
+                        <span class="map-name">Ngồi (Duck)</span>
+                    </div>
+                    <input type="text" class="key-input" id="key-duck" value="s" readonly>
+                </div>
+                <!-- Lean Left -->
+                <div class="map-item">
+                    <div class="map-info">
+                        <span class="map-icon">⬅️</span>
+                        <span class="map-name">Nghiêng Trái</span>
+                    </div>
+                    <input type="text" class="key-input" id="key-left" value="a" readonly>
+                </div>
+                <!-- Lean Right -->
+                <div class="map-item">
+                    <div class="map-info">
+                        <span class="map-icon">➡️</span>
+                        <span class="map-name">Nghiêng Phải</span>
+                    </div>
+                    <input type="text" class="key-input" id="key-right" value="d" readonly>
+                </div>
+                <!-- Punch Left -->
+                <div class="map-item">
+                    <div class="map-info">
+                        <span class="map-icon">🥊</span>
+                        <span class="map-name">Đấm Trái</span>
+                    </div>
+                    <input type="text" class="key-input" id="key-punchL" value="j" readonly>
+                </div>
+                <!-- Punch Right -->
+                <div class="map-item">
+                    <div class="map-info">
+                        <span class="map-icon">🥊</span>
+                        <span class="map-name">Đấm Phải</span>
+                    </div>
+                    <input type="text" class="key-input" id="key-punchR" value="k" readonly>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Camera Area -->
+        <main class="camera-area">
+            <video id="videoElement" playsinline autoplay muted style="display: none;"></video>
+            <canvas id="gameCanvas"></canvas>
+            
+            <!-- HUD -->
+            <div class="overlay-ui">
+                <div class="active-keys-hud">
+                    <span class="hud-title">Phím Đang Bấm:</span>
+                    <div class="hud-keys" id="hudKeys">
+                        <!-- Keys inject here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Setup Modal -->
+    <div class="modal" id="setupModal">
+        <div class="modal-content">
+            <h1>🚀 Bắt đầu điều khiển PC</h1>
+            <p>Để Web AI có thể bấm phím giả lập trên máy tính Windows, bạn cần chạy Python Server cục bộ.</p>
+            
+            <div class="code-block">
+                # Mở Terminal / CMD tại thư mục dự án và chạy:
+                cd apps/kidgame/AIGamepad/server
+                pip install websockets pydirectinput
+                python server.py
+            </div>
+            
+            <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">
+                Đảm bảo server báo "Đang lắng nghe kết nối tại: ws://localhost:8765" trước khi nhấn Tiếp tục.
+            </p>
+            
+            <button class="btn-primary" id="btnConnect">Kết Nối & Bật Camera</button>
+        </div>
+    </div>
+
+    <script src="app.js?v=1.0.0"></script>
+</body>
+</html>
