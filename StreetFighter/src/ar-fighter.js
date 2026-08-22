@@ -382,19 +382,25 @@ export class ARFighter {
     async initPoseEngine() {
         if (window.poseDetection && window.tf) {
             try {
-                console.log('[ARFighter] Loading TensorFlow.js WebGL & MoveNet MultiPose...');
+                // For 2P_LOCAL (2 players on 1 camera), we must use MULTIPOSE.
+                // For 1P or 2P_ONLINE (1 player per camera), SINGLEPOSE is much lighter and prevents mobile freezing.
+                const isMulti = window.GAME_MODE === '2P_LOCAL';
+                const mType = isMulti ? poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING : poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING;
+                
+                console.log(`[ARFighter] Loading TensorFlow.js WebGL & MoveNet ${isMulti ? 'MultiPose' : 'SinglePose'}...`);
                 await tf.setBackend('webgl');
                 await tf.ready();
+                
                 this.detector = await poseDetection.createDetector(
                     poseDetection.SupportedModels.MoveNet,
                     {
-                        modelType: poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING,
+                        modelType: mType,
                         enableSmoothing: true,
                         minPoseScore: 0.2
                     }
                 );
                 this.engineType = 'movenet';
-                console.log('[ARFighter] MoveNet MultiPose initialized successfully!');
+                console.log(`[ARFighter] MoveNet ${isMulti ? 'MultiPose' : 'SinglePose'} initialized successfully!`);
                 this.startMoveNetLoop();
                 return;
             } catch (e) {
