@@ -28,6 +28,7 @@ import { gameState, resetGameState } from '../states/gameState.js';
 import { StartScene } from './StartScene.js';
 import { ARFighter } from '../ar-fighter.js';
 import { AIBot } from '../ai-bot.js';
+import { networkManager } from '../network/NetworkManager.js';
 
 export class BattleScene {
 	image = document.getElementById('Winner');
@@ -38,6 +39,7 @@ export class BattleScene {
 	hurtTimer = 0;
 	battleEnded = false;
 	winnerId = undefined;
+	syncTimer = 0;
 
 	constructor(changeScene) {
 		this.changeScene = changeScene;
@@ -47,10 +49,54 @@ export class BattleScene {
 			new StatusBar(this.fighters, this.onTimeEnd),
 			new FpsCounter(),
 		];
-        window.SF_BATTLE_SCENE = this;
+		window.SF_BATTLE_SCENE = this;
 		resetGameState();
 		this.startRound();
+		this.setupNetworkSync();
 	}
+
+	setupNetworkSync = () => {
+		if (window.GAME_MODE !== '2P_ONLINE') return;
+
+		networkManager.onStateSync = (state) => {
+			if (!state || window.IS_ONLINE_HOST) return;
+			// Guest synchronizes state received from Host
+			if (gameState.fighters[0] && state.p1_hp !== undefined) {
+				gameState.fighters[0].hitPoints = state.p1_hp;
+				gameState.fighters[0].score = state.p1_score || 0;
+			}
+			if (gameState.fighters[1] && state.p2_hp !== undefined) {
+				gameState.fighters[1].hitPoints = state.p2_hp;
+				gameState.fighters[1].score = state.p2_score || 0;
+			}
+			if (this.fighters[0] && state.p1_x !== undefined) {
+				if (Math.abs(this.fighters[0].position.x - state.p1_x) > 15) {
+					this.fighters[0].position.x = state.p1_x;
+				}
+			}
+			if (this.fighters[1] && state.p2_x !== undefined) {
+				if (Math.abs(this.fighters[1].position.x - state.p2_x) > 15) {
+					this.fighters[1].position.x = state.p2_x;
+				}
+			}
+		};
+
+		networkManager.onGameEvent = (event) => {
+			if (!event) return;
+			if (event.type === 'HADOUKEN') {
+				const f = this.fighters[event.fighterIndex];
+				if (f) f.changeState(FighterState.SPECIAL_1_HEAVY, { previous: performance.now() });
+			} else if (event.type === 'HIT' && !window.IS_ONLINE_HOST) {
+				this.handleAttackHit(
+					{ previous: performance.now() },
+					event.playerId,
+					event.opponentId,
+					null,
+					event.strength
+				);
+			}
+		};
+	};
 
 	getFighterClass = (id) => {
 		switch (id) {
@@ -122,6 +168,16 @@ export class BattleScene {
 			this.entities.add(HitSplashClass, position.x, position.y, playerId);
 
 		this.hurtTimer = time.previous + FighterStruckDelay * FRAME_TIME;
+
+		// If Host in Online mode, broadcast hit event
+		if (window.GAME_MODE === '2P_ONLINE' && window.IS_ONLINE_HOST && networkManager.isConnected) {
+			networkManager.sendGameEvent({
+				type: 'HIT',
+				playerId,
+				opponentId,
+				strength
+			});
+		}
 	};
 
 	updateShadows = (time) => {
@@ -139,10 +195,10 @@ export class BattleScene {
 		this.shadows = this.fighters.map((fighter) => new Shadow(fighter));
 		
 		if (!this.arFighter) {
-			this.arFighter = new ARFighter(this, 0); // Assuming Ryu is player 0
+			this.arFighter = new ARFighter(this);
 		}
 		if (!this.aiBot) {
-			this.aiBot = new AIBot(this, 1); // Assuming Ken is player 1
+			this.aiBot = new AIBot(this, 1);
 		}
 	};
 
@@ -193,6 +249,23 @@ export class BattleScene {
 		this.camera.update(time);
 		this.updateOverlays(time);
 		this.updateFighterHP(time);
+
+		// Host broadcasts state sync periodically (20Hz)
+		if (window.GAME_MODE === '2P_ONLINE' && window.IS_ONLINE_HOST && networkManager.isConnected) {
+			if (time.previous > this.syncTimer) {
+				this.syncTimer = time.previous + 50;
+				networkManager.sendStateSync({
+					p1_hp: gameState.fighters[0].hitPoints,
+					p2_hp: gameState.fighters[1].hitPoints,
+					p1_score: gameState.fighters[0].score,
+					p2_score: gameState.fighters[1].score,
+					p1_x: this.fighters[0].position.x,
+					p2_x: this.fighters[1].position.x,
+					p1_y: this.fighters[0].position.y,
+					p2_y: this.fighters[1].position.y
+				});
+			}
+		}
 	};
 
 	drawFighters(context) {

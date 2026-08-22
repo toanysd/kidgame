@@ -512,7 +512,7 @@
   var SCROLL_BOUNDARY = 100;
 
   // src/engine/Camera.js
-  var Camera2 = class {
+  var Camera = class {
     constructor(x, y, fighters) {
       this.position = { x, y };
       this.fighters = fighters;
@@ -5556,6 +5556,258 @@
     };
   };
 
+  // src/network/NetworkManager.js
+  var NetworkManager = class {
+    constructor() {
+      this.peer = null;
+      this.conn = null;
+      this.mediaCall = null;
+      this.isHost = false;
+      this.roomId = null;
+      this.isConnected = false;
+      this.remoteStream = null;
+      this.localStream = null;
+      this.remoteInputs = {
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        lightPunch: false,
+        mediumPunch: false,
+        heavyPunch: false,
+        lightKick: false,
+        mediumKick: false,
+        heavyKick: false
+      };
+      this.onStatusChange = null;
+      this.onConnected = null;
+      this.onDisconnected = null;
+      this.onRemoteStream = null;
+      this.onStateSync = null;
+      this.onGameEvent = null;
+      window.SF_NETWORK = this;
+    }
+    setStatus(text, isError = false) {
+      console.log(`[NetworkManager] ${text}`);
+      if (this.onStatusChange) {
+        this.onStatusChange(text, isError);
+      }
+    }
+    createRoom(localStream = null) {
+      this.isHost = true;
+      this.localStream = localStream;
+      const shortCode = Math.floor(1e3 + Math.random() * 9e3).toString();
+      const roomId = `SF-${shortCode}`;
+      this.roomId = roomId;
+      this.setStatus(`\u0110ang kh\u1EDFi t\u1EA1o ph\xF2ng [${roomId}]...`);
+      this.initPeer(roomId, () => {
+        this.setStatus(`Ph\xF2ng \u0111\xE3 s\u1EB5n s\xE0ng! M\xE3: ${this.roomId}`);
+      });
+      return roomId;
+    }
+    joinRoom(roomId, localStream = null) {
+      this.isHost = false;
+      this.roomId = roomId.trim().toUpperCase();
+      this.localStream = localStream;
+      this.setStatus(`\u0110ang k\u1EBFt n\u1ED1i t\u1EDBi ph\xF2ng [${this.roomId}]...`);
+      const randomId = `SF-GUEST-${Math.floor(1e3 + Math.random() * 9e3)}`;
+      this.initPeer(randomId, () => {
+        this.connectToHost(this.roomId);
+      });
+    }
+    initPeer(peerId, onOpenCallback) {
+      if (this.peer) {
+        try {
+          this.peer.destroy();
+        } catch (e) {
+        }
+      }
+      if (typeof Peer === "undefined") {
+        this.setStatus("L\u1ED7i: Th\u01B0 vi\u1EC7n PeerJS ch\u01B0a \u0111\u01B0\u1EE3c t\u1EA3i!", true);
+        return;
+      }
+      this.peer = new Peer(peerId, {
+        debug: 1,
+        config: {
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+            { urls: "stun:stun2.l.google.com:19302" }
+          ]
+        }
+      });
+      this.peer.on("open", (id) => {
+        console.log("[PeerJS] Peer open with ID:", id);
+        if (onOpenCallback)
+          onOpenCallback(id);
+      });
+      this.peer.on("connection", (conn) => {
+        console.log("[PeerJS] Incoming connection from:", conn.peer);
+        this.setupConnection(conn);
+      });
+      this.peer.on("call", (call) => {
+        console.log("[PeerJS] Incoming media call from:", call.peer);
+        this.mediaCall = call;
+        if (this.localStream) {
+          call.answer(this.localStream);
+        } else {
+          call.answer();
+        }
+        call.on("stream", (stream) => {
+          console.log("[PeerJS] Received remote media stream");
+          this.remoteStream = stream;
+          if (this.onRemoteStream)
+            this.onRemoteStream(stream);
+        });
+      });
+      this.peer.on("error", (err) => {
+        console.error("[PeerJS] Error:", err);
+        this.setStatus(`L\u1ED7i k\u1EBFt n\u1ED1i: ${err.type || err.message}`, true);
+      });
+      this.peer.on("disconnected", () => {
+        this.setStatus("M\u1EA5t k\u1EBFt n\u1ED1i t\u1EDBi m\xE1y ch\u1EE7 PeerJS!", true);
+      });
+    }
+    connectToHost(hostRoomId) {
+      const conn = this.peer.connect(hostRoomId, {
+        reliable: true
+      });
+      this.setupConnection(conn);
+      if (this.localStream) {
+        try {
+          const call = this.peer.call(hostRoomId, this.localStream);
+          this.mediaCall = call;
+          call.on("stream", (stream) => {
+            this.remoteStream = stream;
+            if (this.onRemoteStream)
+              this.onRemoteStream(stream);
+          });
+        } catch (e) {
+          console.warn("[PeerJS] Media call error:", e);
+        }
+      }
+    }
+    setupConnection(conn) {
+      this.conn = conn;
+      conn.on("open", () => {
+        console.log("[PeerJS] DataChannel Open with:", conn.peer);
+        this.isConnected = true;
+        this.setStatus(`\u0110\xE3 k\u1EBFt n\u1ED1i th\xE0nh c\xF4ng v\u1EDBi \u0111\u1ED1i th\u1EE7!`);
+        if (this.isHost && this.localStream) {
+          try {
+            const call = this.peer.call(conn.peer, this.localStream);
+            this.mediaCall = call;
+            call.on("stream", (stream) => {
+              this.remoteStream = stream;
+              if (this.onRemoteStream)
+                this.onRemoteStream(stream);
+            });
+          } catch (e) {
+            console.warn("[PeerJS] Host media call error:", e);
+          }
+        }
+        if (this.onConnected) {
+          this.onConnected({
+            isHost: this.isHost,
+            peerId: conn.peer,
+            roomId: this.roomId
+          });
+        }
+      });
+      conn.on("data", (data) => {
+        this.handleData(data);
+      });
+      conn.on("close", () => {
+        console.log("[PeerJS] Connection closed");
+        this.isConnected = false;
+        this.setStatus("\u0110\u1ED1i th\u1EE7 \u0111\xE3 ng\u1EAFt k\u1EBFt n\u1ED1i!", true);
+        if (this.onDisconnected)
+          this.onDisconnected();
+      });
+      conn.on("error", (err) => {
+        console.error("[PeerJS] Connection error:", err);
+        this.setStatus(`L\u1ED7i DataChannel: ${err}`, true);
+      });
+    }
+    handleData(data) {
+      if (!data || !data.type)
+        return;
+      switch (data.type) {
+        case "INPUT":
+          if (data.inputs) {
+            this.remoteInputs = Object.assign(this.remoteInputs, data.inputs);
+            if (this.isHost) {
+              window.AI_OPPONENT_INPUT = Object.assign({}, this.remoteInputs);
+            } else {
+              window.AI_FRAME_INPUT = Object.assign({}, this.remoteInputs);
+            }
+          }
+          break;
+        case "SYNC":
+          if (this.onStateSync && !this.isHost) {
+            this.onStateSync(data.state);
+          }
+          break;
+        case "EVENT":
+          if (this.onGameEvent) {
+            this.onGameEvent(data.event);
+          }
+          break;
+      }
+    }
+    sendInput(inputs) {
+      if (!this.isConnected || !this.conn || !this.conn.open)
+        return;
+      this.conn.send({
+        type: "INPUT",
+        inputs,
+        time: performance.now()
+      });
+    }
+    sendStateSync(state) {
+      if (!this.isConnected || !this.conn || !this.conn.open || !this.isHost)
+        return;
+      this.conn.send({
+        type: "SYNC",
+        state
+      });
+    }
+    sendGameEvent(event) {
+      if (!this.isConnected || !this.conn || !this.conn.open)
+        return;
+      this.conn.send({
+        type: "EVENT",
+        event
+      });
+    }
+    disconnect() {
+      if (this.conn) {
+        try {
+          this.conn.close();
+        } catch (e) {
+        }
+        this.conn = null;
+      }
+      if (this.mediaCall) {
+        try {
+          this.mediaCall.close();
+        } catch (e) {
+        }
+        this.mediaCall = null;
+      }
+      if (this.peer) {
+        try {
+          this.peer.destroy();
+        } catch (e) {
+        }
+        this.peer = null;
+      }
+      this.isConnected = false;
+      this.remoteStream = null;
+    }
+  };
+  var networkManager = new NetworkManager();
+
   // src/scenes/StartScene.js
   var StartScene = class {
     image = document.getElementById("Controls");
@@ -5573,21 +5825,109 @@
       const modeSelection = document.getElementById("modeSelection");
       if (modeSelection)
         modeSelection.style.display = "none";
+      const onlineModal = document.getElementById("onlineModal");
+      if (onlineModal)
+        onlineModal.style.display = "none";
       this.changeScene(BattleScene);
     };
     constructor(changeScene) {
       this.changeScene = changeScene;
       window.GAME_MODE = "1P";
+      window.IS_ONLINE_HOST = true;
+      this.initUI();
+    }
+    initUI() {
       const modeSelection = document.getElementById("modeSelection");
       if (modeSelection)
         modeSelection.style.display = "flex";
       const btn1P = document.getElementById("btn1P");
-      const btn2P = document.getElementById("btn2P");
+      const btn2PLocal = document.getElementById("btn2PLocal");
+      const btn2POnline = document.getElementById("btn2POnline");
+      const onlineModal = document.getElementById("onlineModal");
+      const closeOnlineModal = document.getElementById("closeOnlineModal");
+      const btnCreateRoom = document.getElementById("btnCreateRoom");
+      const btnJoinRoom = document.getElementById("btnJoinRoom");
+      const btnCopyRoomLink = document.getElementById("btnCopyRoomLink");
+      const inputRoomCode = document.getElementById("inputRoomCode");
+      const roomCreatedInfo = document.getElementById("roomCreatedInfo");
+      const createdRoomCode = document.getElementById("createdRoomCode");
+      const onlineStatusMessage = document.getElementById("onlineStatusMessage");
       if (btn1P) {
         btn1P.onclick = () => this.endStartScene("1P");
       }
-      if (btn2P) {
-        btn2P.onclick = () => this.endStartScene("2P");
+      if (btn2PLocal) {
+        btn2PLocal.onclick = () => this.endStartScene("2P_LOCAL");
+      }
+      if (btn2POnline) {
+        btn2POnline.onclick = () => {
+          if (onlineModal)
+            onlineModal.style.display = "flex";
+        };
+      }
+      if (closeOnlineModal) {
+        closeOnlineModal.onclick = () => {
+          if (onlineModal)
+            onlineModal.style.display = "none";
+        };
+      }
+      networkManager.onStatusChange = (msg, isErr) => {
+        if (onlineStatusMessage) {
+          onlineStatusMessage.textContent = msg;
+          onlineStatusMessage.style.color = isErr ? "#f87171" : "#38bdf8";
+        }
+      };
+      networkManager.onConnected = ({ isHost, roomId }) => {
+        if (onlineStatusMessage) {
+          onlineStatusMessage.textContent = "\u0110\u1ED1i th\u1EE7 \u0111\xE3 s\u1EB5n s\xE0ng! \u0110ang t\u1EA3i tr\u1EADn \u0111\u1EA5u...";
+          onlineStatusMessage.style.color = "#4ade80";
+        }
+        setTimeout(() => {
+          this.endStartScene("2P_ONLINE");
+        }, 1e3);
+      };
+      if (btnCreateRoom) {
+        btnCreateRoom.onclick = () => {
+          window.IS_ONLINE_HOST = true;
+          const localStream = window.parent?.globalCameraStream || null;
+          const roomId = networkManager.createRoom(localStream);
+          if (roomCreatedInfo)
+            roomCreatedInfo.style.display = "block";
+          if (createdRoomCode)
+            createdRoomCode.textContent = roomId;
+        };
+      }
+      if (btnCopyRoomLink) {
+        btnCopyRoomLink.onclick = () => {
+          const roomId = createdRoomCode?.textContent || "";
+          const shareUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+          navigator.clipboard.writeText(shareUrl).then(() => {
+            btnCopyRoomLink.textContent = "\u2713 \u0110\xE3 Copy!";
+            setTimeout(() => {
+              btnCopyRoomLink.textContent = "\u{1F4CB} Copy Link";
+            }, 2e3);
+          });
+        };
+      }
+      if (btnJoinRoom) {
+        btnJoinRoom.onclick = () => {
+          const code = inputRoomCode?.value?.trim() || "";
+          if (!code) {
+            if (onlineStatusMessage)
+              onlineStatusMessage.textContent = "Vui l\xF2ng nh\u1EADp m\xE3 ph\xF2ng!";
+            return;
+          }
+          window.IS_ONLINE_HOST = false;
+          const localStream = window.parent?.globalCameraStream || null;
+          networkManager.joinRoom(code, localStream);
+        };
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      const autoRoom = urlParams.get("room");
+      if (autoRoom) {
+        if (onlineModal)
+          onlineModal.style.display = "flex";
+        if (inputRoomCode)
+          inputRoomCode.value = autoRoom;
       }
     }
     updateLogo = (time) => {
@@ -5604,10 +5944,10 @@
       this.updateTextPosition(time);
     };
     drawText = (context) => {
-      context.fillStyle = "white";
-      context.font = "12px Arial";
+      context.fillStyle = "#00f0ff";
+      context.font = "bold 11px sans-serif";
       context.textAlign = "center";
-      context.fillText("CHOOSE GAME MODE BELOW", SCENE_WIDTH / 2, 180);
+      context.fillText("CHOOSE YOUR BATTLE MODE BELOW", SCENE_WIDTH / 2, 178);
       context.textAlign = "left";
     };
     drawLogo = (context) => {
@@ -5636,11 +5976,11 @@
   };
 
   // src/ar-fighter.js
-  var ARFighter = class {
+  var PlayerCombatTracker = class {
     constructor(scene, fighterIndex) {
       this.scene = scene;
       this.fighterIndex = fighterIndex;
-      this.emaPoints = {};
+      this.emaLandmarks = null;
       this.prevLeftArmDist = 0;
       this.prevRightArmDist = 0;
       this.prevHipY = 0;
@@ -5648,106 +5988,91 @@
       this.isChargingHadouken = false;
       this.chargeStartTime = 0;
       this.hadoukenFired = 0;
-      window.AI_FRAME_INPUT = {
-        up: false,
-        down: false,
-        left: false,
-        right: false,
-        lightPunch: false,
-        mediumPunch: false,
-        heavyPunch: false,
-        lightKick: false,
-        mediumKick: false,
-        heavyKick: false
-      };
       this.inputTimers = {};
       this.inputFlags = {};
-      this.initMediapipe();
-    }
-    initMediapipe() {
-      const videoElement = document.createElement("video");
-      videoElement.style.display = "none";
-      videoElement.autoplay = true;
-      document.body.appendChild(videoElement);
-      const pose = new Pose({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-      });
-      pose.setOptions({
-        modelComplexity: 1,
-        smoothLandmarks: true,
-        minDetectionConfidence: 0.75,
-        minTrackingConfidence: 0.75
-      });
-      pose.onResults(this.onPoseResults.bind(this));
-      if (window.parent && window.parent.globalCameraStream) {
-        videoElement.srcObject = window.parent.globalCameraStream;
-        videoElement.play().catch((e) => console.log("Video play error:", e));
-        let lastVideoTime = -1;
-        const processFrame = async () => {
-          if (videoElement.readyState >= 2 && videoElement.currentTime !== lastVideoTime) {
-            lastVideoTime = videoElement.currentTime;
-            await pose.send({ image: videoElement });
-          }
-          requestAnimationFrame(processFrame);
-        };
-        processFrame();
-      } else {
-        const camera = new Camera(videoElement, {
-          onFrame: async () => {
-            await pose.send({ image: videoElement });
-          },
-          width: 640,
-          height: 480
-        });
-        camera.start();
-      }
-      this.videoElement = videoElement;
-    }
-    onPoseResults(results) {
-      if (!results.poseLandmarks)
-        return;
-      const alpha = 0.6;
-      results.poseLandmarks.forEach((lm, index) => {
-        if (!this.emaPoints[index]) {
-          this.emaPoints[index] = { x: lm.x, y: lm.y, z: lm.z };
-        } else {
-          this.emaPoints[index].x = lm.x * alpha + this.emaPoints[index].x * (1 - alpha);
-          this.emaPoints[index].y = lm.y * alpha + this.emaPoints[index].y * (1 - alpha);
-          this.emaPoints[index].z = lm.z * alpha + this.emaPoints[index].z * (1 - alpha);
-        }
-      });
-      this.processCombatLogic(performance.now());
+      this.lastSeenTime = 0;
     }
     triggerInput(key, duration = 30) {
       if (this.inputFlags[key])
         return;
       this.inputFlags[key] = true;
-      window.AI_FRAME_INPUT[key] = true;
+      const targetObj = this.fighterIndex === 0 ? window.AI_FRAME_INPUT : window.AI_OPPONENT_INPUT;
+      if (targetObj)
+        targetObj[key] = true;
+      if (window.GAME_MODE === "2P_ONLINE" && networkManager && networkManager.isConnected) {
+        const isLocal = window.IS_ONLINE_HOST && this.fighterIndex === 0 || !window.IS_ONLINE_HOST && this.fighterIndex === 1;
+        if (isLocal) {
+          const inputs = Object.assign({}, targetObj);
+          inputs[key] = true;
+          networkManager.sendInput(inputs);
+        }
+      }
       if (this.inputTimers[key])
         clearTimeout(this.inputTimers[key]);
       this.inputTimers[key] = setTimeout(() => {
-        window.AI_FRAME_INPUT[key] = false;
+        if (targetObj)
+          targetObj[key] = false;
+        if (window.GAME_MODE === "2P_ONLINE" && networkManager && networkManager.isConnected) {
+          const isLocal = window.IS_ONLINE_HOST && this.fighterIndex === 0 || !window.IS_ONLINE_HOST && this.fighterIndex === 1;
+          if (isLocal) {
+            const inputs = Object.assign({}, targetObj);
+            inputs[key] = false;
+            networkManager.sendInput(inputs);
+          }
+        }
         setTimeout(() => {
           this.inputFlags[key] = false;
         }, 350);
       }, duration);
     }
+    updateLandmarks(rawLandmarks, now) {
+      this.lastSeenTime = now;
+      const alpha = 0.6;
+      if (!this.emaLandmarks) {
+        this.emaLandmarks = {};
+        for (const key in rawLandmarks) {
+          this.emaLandmarks[key] = {
+            x: rawLandmarks[key].x,
+            y: rawLandmarks[key].y,
+            score: rawLandmarks[key].score || 1
+          };
+        }
+      } else {
+        for (const key in rawLandmarks) {
+          if (!this.emaLandmarks[key]) {
+            this.emaLandmarks[key] = {
+              x: rawLandmarks[key].x,
+              y: rawLandmarks[key].y,
+              score: rawLandmarks[key].score || 1
+            };
+          } else {
+            this.emaLandmarks[key].x = rawLandmarks[key].x * alpha + this.emaLandmarks[key].x * (1 - alpha);
+            this.emaLandmarks[key].y = rawLandmarks[key].y * alpha + this.emaLandmarks[key].y * (1 - alpha);
+            this.emaLandmarks[key].score = rawLandmarks[key].score || 1;
+          }
+        }
+      }
+      this.processCombatLogic(now);
+    }
     processCombatLogic(now) {
-      const leftWrist = this.emaPoints[15];
-      const rightWrist = this.emaPoints[16];
-      const leftShoulder = this.emaPoints[11];
-      const rightShoulder = this.emaPoints[12];
-      const leftHip = this.emaPoints[23];
-      const rightHip = this.emaPoints[24];
-      const leftAnkle = this.emaPoints[27];
-      const rightAnkle = this.emaPoints[28];
-      const leftKnee = this.emaPoints[25];
-      const rightKnee = this.emaPoints[26];
-      const nose = this.emaPoints[0];
+      if (!this.emaLandmarks)
+        return;
+      const lm = this.emaLandmarks;
+      const leftWrist = lm.leftWrist;
+      const rightWrist = lm.rightWrist;
+      const leftShoulder = lm.leftShoulder;
+      const rightShoulder = lm.rightShoulder;
+      const leftHip = lm.leftHip;
+      const rightHip = lm.rightHip;
+      const leftAnkle = lm.leftAnkle;
+      const rightAnkle = lm.rightAnkle;
+      const leftKnee = lm.leftKnee;
+      const rightKnee = lm.rightKnee;
+      const nose = lm.nose;
       if (!leftShoulder || !rightShoulder || !leftHip || !rightHip || !leftWrist || !rightWrist)
         return;
       const wristDist = Math.sqrt(Math.pow(leftWrist.x - rightWrist.x, 2) + Math.pow(leftWrist.y - rightWrist.y, 2));
-      if (wristDist < 0.1 && now - this.hadoukenFired > 3e3) {
+      if (wristDist < 0.12 && now - this.hadoukenFired > 3e3) {
         if (!this.isChargingHadouken) {
           this.isChargingHadouken = true;
           this.chargeStartTime = now;
@@ -5760,9 +6085,9 @@
       }
       const leftArmDist = Math.sqrt(Math.pow(leftWrist.x - leftShoulder.x, 2) + Math.pow(leftWrist.y - leftShoulder.y, 2));
       const rightArmDist = Math.sqrt(Math.pow(rightWrist.x - rightShoulder.x, 2) + Math.pow(rightWrist.y - rightShoulder.y, 2));
-      if (leftArmDist > 0.25 && leftArmDist - this.prevLeftArmDist > 0.015) {
+      if (leftArmDist > 0.23 && leftArmDist - this.prevLeftArmDist > 0.015) {
         this.triggerInput("lightPunch");
-      } else if (rightArmDist > 0.25 && rightArmDist - this.prevRightArmDist > 0.015) {
+      } else if (rightArmDist > 0.23 && rightArmDist - this.prevRightArmDist > 0.015) {
         this.triggerInput("heavyPunch");
       }
       this.prevLeftArmDist = leftArmDist;
@@ -5774,9 +6099,9 @@
       }
       const avgHipY = (leftHip.y + rightHip.y) / 2;
       if (this.prevHipY > 0) {
-        if (avgHipY < this.prevHipY - 0.04) {
+        if (avgHipY < this.prevHipY - 0.035) {
           this.triggerInput("up", 100);
-        } else if (avgHipY > this.prevHipY + 0.05) {
+        } else if (avgHipY > this.prevHipY + 0.045) {
           this.triggerInput("down", 50);
         }
       }
@@ -5785,19 +6110,24 @@
         if (!this.baseNoseX)
           this.baseNoseX = nose.x;
         this.baseNoseX = nose.x * 0.01 + this.baseNoseX * 0.99;
-        if (nose.x < this.baseNoseX - 0.08) {
+        if (nose.x < this.baseNoseX - 0.07) {
           this.triggerInput("right", 30);
-        } else if (nose.x > this.baseNoseX + 0.08) {
+        } else if (nose.x > this.baseNoseX + 0.07) {
           this.triggerInput("left", 30);
         }
       }
       if (leftWrist.y < leftShoulder.y && rightWrist.y < rightShoulder.y && wristDist < 0.2) {
-        this.triggerInput("left");
+        const blockDir = this.fighterIndex === 0 ? "left" : "right";
+        this.triggerInput(blockDir);
       }
     }
     fireHadouken(now) {
       this.isChargingHadouken = false;
       this.hadoukenFired = now;
+      const fighter = this.scene && this.scene.fighters && this.scene.fighters[this.fighterIndex];
+      if (fighter) {
+        fighter.changeState(FighterState.SPECIAL_1_HEAVY, { previous: now });
+      }
       const opponentId = 1 - this.fighterIndex;
       if (this.scene && this.scene.handleAttackHit) {
         this.scene.handleAttackHit(
@@ -5807,66 +6137,348 @@
           null,
           FighterAttackStrength.HEAVY
         );
-        gameState.fighters[opponentId].hitPoints -= 120;
+        if (gameState && gameState.fighters && gameState.fighters[opponentId]) {
+          gameState.fighters[opponentId].hitPoints -= 80;
+        }
+      }
+      if (window.GAME_MODE === "2P_ONLINE" && networkManager && networkManager.isConnected) {
+        networkManager.sendGameEvent({
+          type: "HADOUKEN",
+          fighterIndex: this.fighterIndex,
+          timestamp: now
+        });
       }
     }
-    draw(context, camera) {
-      if (!this.emaPoints || Object.keys(this.emaPoints).length === 0)
+    draw(context, colorPrimary, colorSecondary, auraColor) {
+      if (!this.emaLandmarks)
+        return;
+      const now = performance.now();
+      if (now - this.lastSeenTime > 500)
         return;
       const scaleW = 384;
       const scaleH = 224;
-      const drawPoint = (lm, color = "white") => {
-        if (!lm)
+      const lm = this.emaLandmarks;
+      const drawPoint = (p, color = "white", radius = 2) => {
+        if (!p)
           return;
-        const x = (1 - lm.x) * scaleW;
-        const y = lm.y * scaleH;
+        const x = (1 - p.x) * scaleW;
+        const y = p.y * scaleH;
         context.fillStyle = color;
         context.beginPath();
-        context.arc(x, y, 2, 0, 2 * Math.PI);
+        context.arc(x, y, radius, 0, 2 * Math.PI);
         context.fill();
       };
-      const drawLine = (i, j, color = "rgba(0, 255, 0, 0.8)") => {
-        const p1 = this.emaPoints[i];
-        const p2 = this.emaPoints[j];
+      const drawLine = (p1, p2, color = colorPrimary, width = 1.5) => {
         if (!p1 || !p2)
           return;
         context.beginPath();
         context.moveTo((1 - p1.x) * scaleW, p1.y * scaleH);
         context.lineTo((1 - p2.x) * scaleW, p2.y * scaleH);
         context.strokeStyle = color;
-        context.lineWidth = 1;
+        context.lineWidth = width;
         context.stroke();
       };
-      drawLine(11, 12);
-      drawLine(23, 24);
-      drawLine(11, 23);
-      drawLine(12, 24);
-      drawLine(11, 13, "cyan");
-      drawLine(13, 15, "cyan");
-      drawLine(12, 14, "magenta");
-      drawLine(14, 16, "magenta");
-      drawLine(23, 25, "cyan");
-      drawLine(25, 27, "cyan");
-      drawLine(24, 26, "magenta");
-      drawLine(26, 28, "magenta");
-      [0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28].forEach((idx) => drawPoint(this.emaPoints[idx]));
-      if (this.isChargingHadouken) {
-        const leftWrist = this.emaPoints[15];
-        const rightWrist = this.emaPoints[16];
-        if (leftWrist && rightWrist) {
-          const cx = (1 - (leftWrist.x + rightWrist.x) / 2) * scaleW;
-          const cy = (leftWrist.y + rightWrist.y) / 2 * scaleH;
-          const now = performance.now();
-          const elapsed = now - this.chargeStartTime;
-          const progress = Math.min(elapsed / 1500, 1);
-          context.beginPath();
-          context.arc(cx, cy, 10 + progress * 40, 0, 2 * Math.PI);
-          const gradient = context.createRadialGradient(cx, cy, 0, cx, cy, 10 + progress * 40);
-          gradient.addColorStop(0, `rgba(100, 200, 255, ${0.5 + progress * 0.5})`);
-          gradient.addColorStop(1, "rgba(0, 100, 255, 0)");
-          context.fillStyle = gradient;
-          context.fill();
+      drawLine(lm.leftShoulder, lm.rightShoulder, colorPrimary, 2);
+      drawLine(lm.leftHip, lm.rightHip, colorPrimary, 2);
+      drawLine(lm.leftShoulder, lm.leftHip, colorPrimary, 1.5);
+      drawLine(lm.rightShoulder, lm.rightHip, colorPrimary, 1.5);
+      drawLine(lm.leftShoulder, lm.leftElbow, colorPrimary, 2);
+      drawLine(lm.leftElbow, lm.leftWrist, colorPrimary, 2);
+      drawLine(lm.leftHip, lm.leftKnee, colorPrimary, 2);
+      drawLine(lm.leftKnee, lm.leftAnkle, colorPrimary, 2);
+      drawLine(lm.rightShoulder, lm.rightElbow, colorSecondary, 2);
+      drawLine(lm.rightElbow, lm.rightWrist, colorSecondary, 2);
+      drawLine(lm.rightHip, lm.rightKnee, colorSecondary, 2);
+      drawLine(lm.rightKnee, lm.rightAnkle, colorSecondary, 2);
+      for (const key in lm) {
+        drawPoint(lm[key], "#ffffff", 2.5);
+      }
+      if (lm.nose) {
+        const nx = (1 - lm.nose.x) * scaleW;
+        const ny = Math.max(10, lm.nose.y * scaleH - 18);
+        context.fillStyle = colorPrimary;
+        context.font = "bold 9px sans-serif";
+        context.textAlign = "center";
+        context.fillText(this.fighterIndex === 0 ? "P1 RYU" : "P2 KEN", nx, ny);
+      }
+      if (this.isChargingHadouken && lm.leftWrist && lm.rightWrist) {
+        const cx = (1 - (lm.leftWrist.x + lm.rightWrist.x) / 2) * scaleW;
+        const cy = (lm.leftWrist.y + lm.rightWrist.y) / 2 * scaleH;
+        const elapsed = now - this.chargeStartTime;
+        const progress = Math.min(elapsed / 1500, 1);
+        context.beginPath();
+        context.arc(cx, cy, 8 + progress * 35, 0, 2 * Math.PI);
+        const gradient = context.createRadialGradient(cx, cy, 0, cx, cy, 8 + progress * 35);
+        gradient.addColorStop(0, auraColor);
+        gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+        context.fillStyle = gradient;
+        context.fill();
+      }
+    }
+  };
+  var ARFighter = class {
+    constructor(scene) {
+      this.scene = scene;
+      this.engineType = "none";
+      this.detector = null;
+      this.videoElement = null;
+      this.remoteVideoElement = null;
+      this.videoStream = null;
+      window.AI_FRAME_INPUT = {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        lightPunch: false,
+        mediumPunch: false,
+        heavyPunch: false,
+        lightKick: false,
+        mediumKick: false,
+        heavyKick: false
+      };
+      window.AI_OPPONENT_INPUT = {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        lightPunch: false,
+        mediumPunch: false,
+        heavyPunch: false,
+        lightKick: false,
+        mediumKick: false,
+        heavyKick: false
+      };
+      this.trackers = [
+        new PlayerCombatTracker(scene, 0),
+        new PlayerCombatTracker(scene, 1)
+      ];
+      this.initCamera();
+    }
+    async initCamera() {
+      const videoElement = document.createElement("video");
+      videoElement.style.display = "none";
+      videoElement.setAttribute("playsinline", "");
+      videoElement.setAttribute("autoplay", "");
+      videoElement.setAttribute("muted", "");
+      videoElement.muted = true;
+      document.body.appendChild(videoElement);
+      this.videoElement = videoElement;
+      if (window.parent && window.parent.globalCameraStream) {
+        this.videoStream = window.parent.globalCameraStream;
+        videoElement.srcObject = this.videoStream;
+        await videoElement.play().catch((e) => console.log("Video play error:", e));
+      } else {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+            audio: false
+          });
+          this.videoStream = stream;
+          videoElement.srcObject = stream;
+          await videoElement.play().catch((e) => console.log("Video play error:", e));
+        } catch (err) {
+          console.warn("[ARFighter] getUserMedia failed:", err);
         }
+      }
+      this.remoteVideoElement = document.createElement("video");
+      this.remoteVideoElement.style.display = "none";
+      this.remoteVideoElement.setAttribute("playsinline", "");
+      this.remoteVideoElement.setAttribute("autoplay", "");
+      this.remoteVideoElement.setAttribute("muted", "");
+      this.remoteVideoElement.muted = true;
+      document.body.appendChild(this.remoteVideoElement);
+      networkManager.onRemoteStream = (stream) => {
+        console.log("[ARFighter] Attaching remote stream to video element");
+        this.remoteVideoElement.srcObject = stream;
+        this.remoteVideoElement.play().catch((e) => console.warn("Remote video play error:", e));
+      };
+      await this.initPoseEngine();
+    }
+    async initPoseEngine() {
+      if (window.poseDetection && window.tf) {
+        try {
+          console.log("[ARFighter] Loading TensorFlow.js WebGL & MoveNet MultiPose...");
+          await tf.setBackend("webgl");
+          await tf.ready();
+          this.detector = await poseDetection.createDetector(
+            poseDetection.SupportedModels.MoveNet,
+            {
+              modelType: poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING,
+              enableSmoothing: true,
+              minPoseScore: 0.2
+            }
+          );
+          this.engineType = "movenet";
+          console.log("[ARFighter] MoveNet MultiPose initialized successfully!");
+          this.startMoveNetLoop();
+          return;
+        } catch (e) {
+          console.warn("[ARFighter] MoveNet MultiPose init failed, fallback to MediaPipe Pose:", e);
+        }
+      }
+      this.initMediaPipe();
+    }
+    startMoveNetLoop() {
+      const detectFrame = async () => {
+        if (this.videoElement && this.videoElement.readyState >= 2 && this.detector) {
+          try {
+            const poses = await this.detector.estimatePoses(this.videoElement);
+            this.onMultiPoseResults(poses);
+          } catch (err) {
+          }
+        }
+        requestAnimationFrame(detectFrame);
+      };
+      requestAnimationFrame(detectFrame);
+    }
+    initMediaPipe() {
+      if (typeof Pose === "undefined") {
+        console.warn("[ARFighter] MediaPipe Pose not available");
+        return;
+      }
+      this.engineType = "mediapipe";
+      console.log("[ARFighter] Initializing MediaPipe Pose Engine (Single Pose)...");
+      const pose = new Pose({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+      });
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.65,
+        minTrackingConfidence: 0.65
+      });
+      pose.onResults((results) => {
+        this.onMediaPipeResults(results);
+      });
+      let lastTime = -1;
+      const processFrame = async () => {
+        if (this.videoElement && this.videoElement.readyState >= 2 && this.videoElement.currentTime !== lastTime) {
+          lastTime = this.videoElement.currentTime;
+          try {
+            await pose.send({ image: this.videoElement });
+          } catch (e) {
+          }
+        }
+        requestAnimationFrame(processFrame);
+      };
+      processFrame();
+    }
+    onMultiPoseResults(poses) {
+      if (!poses || poses.length === 0)
+        return;
+      const now = performance.now();
+      const vw = this.videoElement.videoWidth || 640;
+      const vh = this.videoElement.videoHeight || 480;
+      const parsedPoses = [];
+      for (const pose of poses) {
+        if (pose.score < 0.2)
+          continue;
+        const kpMap = {};
+        for (const kp of pose.keypoints) {
+          kpMap[kp.name] = {
+            x: kp.x / vw,
+            y: kp.y / vh,
+            score: kp.score
+          };
+        }
+        const standardLm = {
+          nose: kpMap["nose"],
+          leftShoulder: kpMap["left_shoulder"],
+          rightShoulder: kpMap["right_shoulder"],
+          leftElbow: kpMap["left_elbow"],
+          rightElbow: kpMap["right_elbow"],
+          leftWrist: kpMap["left_wrist"],
+          rightWrist: kpMap["right_wrist"],
+          leftHip: kpMap["left_hip"],
+          rightHip: kpMap["right_hip"],
+          leftKnee: kpMap["left_knee"],
+          rightKnee: kpMap["right_knee"],
+          leftAnkle: kpMap["left_ankle"],
+          rightAnkle: kpMap["right_ankle"]
+        };
+        const centerXRaw = ((standardLm.leftHip ? standardLm.leftHip.x : 0.5) + (standardLm.rightHip ? standardLm.rightHip.x : 0.5)) / 2;
+        const mirroredCenterX = 1 - centerXRaw;
+        parsedPoses.push({
+          landmarks: standardLm,
+          mirroredCenterX,
+          score: pose.score
+        });
+      }
+      if (parsedPoses.length === 0)
+        return;
+      const mode = window.GAME_MODE || "1P";
+      if (mode === "2P_LOCAL") {
+        parsedPoses.sort((a, b) => a.mirroredCenterX - b.mirroredCenterX);
+        if (parsedPoses.length >= 2) {
+          this.trackers[0].updateLandmarks(parsedPoses[0].landmarks, now);
+          this.trackers[1].updateLandmarks(parsedPoses[parsedPoses.length - 1].landmarks, now);
+        } else {
+          if (parsedPoses[0].mirroredCenterX < 0.5) {
+            this.trackers[0].updateLandmarks(parsedPoses[0].landmarks, now);
+          } else {
+            this.trackers[1].updateLandmarks(parsedPoses[0].landmarks, now);
+          }
+        }
+      } else if (mode === "2P_ONLINE") {
+        const localTrackerIndex = window.IS_ONLINE_HOST ? 0 : 1;
+        this.trackers[localTrackerIndex].updateLandmarks(parsedPoses[0].landmarks, now);
+      } else {
+        this.trackers[0].updateLandmarks(parsedPoses[0].landmarks, now);
+      }
+    }
+    onMediaPipeResults(results) {
+      if (!results.poseLandmarks)
+        return;
+      const now = performance.now();
+      const pl = results.poseLandmarks;
+      const standardLm = {
+        nose: pl[0],
+        leftShoulder: pl[11],
+        rightShoulder: pl[12],
+        leftElbow: pl[13],
+        rightElbow: pl[14],
+        leftWrist: pl[15],
+        rightWrist: pl[16],
+        leftHip: pl[23],
+        rightHip: pl[24],
+        leftKnee: pl[25],
+        rightKnee: pl[26],
+        leftAnkle: pl[27],
+        rightAnkle: pl[28]
+      };
+      const mode = window.GAME_MODE || "1P";
+      if (mode === "2P_ONLINE") {
+        const localTrackerIndex = window.IS_ONLINE_HOST ? 0 : 1;
+        this.trackers[localTrackerIndex].updateLandmarks(standardLm, now);
+      } else {
+        this.trackers[0].updateLandmarks(standardLm, now);
+      }
+    }
+    draw(context, camera) {
+      const mode = window.GAME_MODE || "1P";
+      this.trackers[0].draw(context, "#00e5ff", "#0077ff", "rgba(0, 200, 255, 0.7)");
+      if (mode === "2P_LOCAL") {
+        this.trackers[1].draw(context, "#f43f5e", "#fb923c", "rgba(255, 100, 0, 0.7)");
+      }
+      if (mode === "2P_ONLINE" && this.remoteVideoElement && this.remoteVideoElement.readyState >= 2) {
+        const pipW = 80;
+        const pipH = 50;
+        const pipX = 384 - pipW - 10;
+        const pipY = 10;
+        context.save();
+        context.fillStyle = "rgba(0, 0, 0, 0.7)";
+        context.fillRect(pipX - 2, pipY - 2, pipW + 4, pipH + 4);
+        context.strokeStyle = window.IS_ONLINE_HOST ? "#f43f5e" : "#00e5ff";
+        context.lineWidth = 1.5;
+        context.strokeRect(pipX - 2, pipY - 2, pipW + 4, pipH + 4);
+        context.translate(pipX + pipW, pipY);
+        context.scale(-1, 1);
+        context.drawImage(this.remoteVideoElement, 0, 0, pipW, pipH);
+        context.restore();
+        context.fillStyle = "white";
+        context.font = "bold 7px sans-serif";
+        context.textAlign = "center";
+        context.fillText("OPPONENT CAM", pipX + pipW / 2, pipY + pipH + 8);
       }
     }
   };
@@ -5891,7 +6503,7 @@
       this.decisionTimer = 0;
     }
     update(time) {
-      if (window.GAME_MODE === "2P")
+      if (window.GAME_MODE !== "1P")
         return;
       if (!this.scene || !this.scene.fighters)
         return;
@@ -5959,6 +6571,7 @@
     hurtTimer = 0;
     battleEnded = false;
     winnerId = void 0;
+    syncTimer = 0;
     constructor(changeScene) {
       this.changeScene = changeScene;
       this.stage = new KenStage();
@@ -5970,7 +6583,51 @@
       window.SF_BATTLE_SCENE = this;
       resetGameState();
       this.startRound();
+      this.setupNetworkSync();
     }
+    setupNetworkSync = () => {
+      if (window.GAME_MODE !== "2P_ONLINE")
+        return;
+      networkManager.onStateSync = (state) => {
+        if (!state || window.IS_ONLINE_HOST)
+          return;
+        if (gameState.fighters[0] && state.p1_hp !== void 0) {
+          gameState.fighters[0].hitPoints = state.p1_hp;
+          gameState.fighters[0].score = state.p1_score || 0;
+        }
+        if (gameState.fighters[1] && state.p2_hp !== void 0) {
+          gameState.fighters[1].hitPoints = state.p2_hp;
+          gameState.fighters[1].score = state.p2_score || 0;
+        }
+        if (this.fighters[0] && state.p1_x !== void 0) {
+          if (Math.abs(this.fighters[0].position.x - state.p1_x) > 15) {
+            this.fighters[0].position.x = state.p1_x;
+          }
+        }
+        if (this.fighters[1] && state.p2_x !== void 0) {
+          if (Math.abs(this.fighters[1].position.x - state.p2_x) > 15) {
+            this.fighters[1].position.x = state.p2_x;
+          }
+        }
+      };
+      networkManager.onGameEvent = (event) => {
+        if (!event)
+          return;
+        if (event.type === "HADOUKEN") {
+          const f = this.fighters[event.fighterIndex];
+          if (f)
+            f.changeState(FighterState.SPECIAL_1_HEAVY, { previous: performance.now() });
+        } else if (event.type === "HIT" && !window.IS_ONLINE_HOST) {
+          this.handleAttackHit(
+            { previous: performance.now() },
+            event.playerId,
+            event.opponentId,
+            null,
+            event.strength
+          );
+        }
+      };
+    };
     getFighterClass = (id) => {
       switch (id) {
         case FighterId.KEN:
@@ -6026,20 +6683,28 @@
       this.fighters[opponentId].direction = this.fighters[playerId].direction * -1;
       position && this.entities.add(HitSplashClass, position.x, position.y, playerId);
       this.hurtTimer = time.previous + FighterStruckDelay * FRAME_TIME;
+      if (window.GAME_MODE === "2P_ONLINE" && window.IS_ONLINE_HOST && networkManager.isConnected) {
+        networkManager.sendGameEvent({
+          type: "HIT",
+          playerId,
+          opponentId,
+          strength
+        });
+      }
     };
     updateShadows = (time) => {
       this.shadows.map((shadow) => shadow.update(time));
     };
     startRound = () => {
       this.fighters = this.getFighterEntities();
-      this.camera = new Camera2(
+      this.camera = new Camera(
         STAGE_PADDING + STAGE_MID_POINT - SCENE_WIDTH / 2,
         16,
         this.fighters
       );
       this.shadows = this.fighters.map((fighter) => new Shadow(fighter));
       if (!this.arFighter) {
-        this.arFighter = new ARFighter(this, 0);
+        this.arFighter = new ARFighter(this);
       }
       if (!this.aiBot) {
         this.aiBot = new AIBot(this, 1);
@@ -6088,6 +6753,21 @@
       this.camera.update(time);
       this.updateOverlays(time);
       this.updateFighterHP(time);
+      if (window.GAME_MODE === "2P_ONLINE" && window.IS_ONLINE_HOST && networkManager.isConnected) {
+        if (time.previous > this.syncTimer) {
+          this.syncTimer = time.previous + 50;
+          networkManager.sendStateSync({
+            p1_hp: gameState.fighters[0].hitPoints,
+            p2_hp: gameState.fighters[1].hitPoints,
+            p1_score: gameState.fighters[0].score,
+            p2_score: gameState.fighters[1].score,
+            p1_x: this.fighters[0].position.x,
+            p2_x: this.fighters[1].position.x,
+            p1_y: this.fighters[0].position.y,
+            p2_y: this.fighters[1].position.y
+          });
+        }
+      }
     };
     drawFighters(context) {
       this.FighterDrawOrder.map(

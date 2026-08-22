@@ -11,7 +11,8 @@ export class AIBot {
     }
 
     update(time) {
-        if (window.GAME_MODE === '2P') return;
+        // AI Bot only runs in 1P mode (vs CPU)
+        if (window.GAME_MODE !== '1P') return;
 
         if (!this.scene || !this.scene.fighters) return;
         const me = this.scene.fighters[this.fighterIndex];
@@ -44,7 +45,6 @@ export class AIBot {
         } else {
             // In attack range
             const attackChance = Math.random();
-            // Reduce attack probability from 80% to 40%
             if (attackChance < 0.1) inputs.lightPunch = true;
             else if (attackChance < 0.2) inputs.mediumPunch = true;
             else if (attackChance < 0.3) inputs.heavyPunch = true;
@@ -60,7 +60,6 @@ export class AIBot {
         }
 
         window.AI_OPPONENT_INPUT = inputs;
-        // Slow down decision loop (previously 150-550ms, now 600-1400ms)
         this.decisionTimer = time.previous + 600 + Math.random() * 800;
     }
 }
