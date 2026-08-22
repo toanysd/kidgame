@@ -371,29 +371,52 @@ function processGestures(pl) {
             const ankleY = (leftAnkle.y + rightAnkle.y) / 2;
             
             const bodyHeight = ankleY - shoulderY;
-            const legLength = ankleY - hipY;
-            const ratio = legLength / bodyHeight;
-            
-            if (ratio > (isJumping ? 0.65 : 0.72) && ankleY < 0.8) shouldGas = true;
-            if (ratio < (isDucking ? 0.45 : 0.40)) shouldBrake = true;
-        }
-    } else if (gasMode === 'head') {
-        const nose = pl[0];
-        if (nose && leftShoulder && rightShoulder) {
-            const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
-            const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x) || 0.1;
-            
-            const pitchRatio = (shoulderMidY - nose.y) / shoulderWidth;
-            const baseSens = parseFloat(document.getElementById('pitchSensSlider')?.value) || 0.10;
-            
-            const jumpThresh = isJumping ? (1.20 + baseSens - 0.05) : (1.20 + baseSens);
-            const duckThresh = isDucking ? (1.00 - baseSens + 0.05) : (1.00 - baseSens);
+    const gasMode = document.getElementById('gasMode')?.value || 'distance';
+    const isAutoGas = document.getElementById('autoGas')?.checked;
 
-            if (pitchRatio > jumpThresh) shouldGas = true;
-            if (pitchRatio < duckThresh) shouldBrake = true;
+    if (gasMode === 'head') {
+        const nose = pl[0];
+        const leftEar = pl[7];
+        const rightEar = pl[8];
+        if (nose && leftEar && rightEar) {
+            const earMidY = (leftEar.y + rightEar.y) / 2;
+            const pitchDelta = nose.y - earMidY;
+            
+            const baseThresh = parseFloat(document.getElementById('pitchSensSlider')?.value) || 0.10;
+            const threshGas = GState.isJumping ? (baseThresh * 0.8) : baseThresh;
+            const threshBrake = GState.isDucking ? (baseThresh * 0.8) : baseThresh;
+            
+            if (pitchDelta < -threshGas) shouldGas = true;
+            else if (pitchDelta > threshBrake) shouldBrake = true;
+        }
+    } else if (gasMode === 'body') {
+        const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
+        if (GState.calibratingFrames < 30) {
+            GState.baselineY += shoulderMidY;
+            GState.calibratingFrames++;
+            if (GState.calibratingFrames === 30) GState.baselineY /= 30;
+        } else {
+            const deltaY = shoulderMidY - GState.baselineY;
+            GState.baselineY = GState.baselineY * 0.95 + shoulderMidY * 0.05;
+            if (deltaY < -0.06) shouldGas = true;
+            else if (deltaY > 0.06) shouldBrake = true;
+        }
+    } else if (gasMode === 'distance') {
+        // Chụm tay = Tiến, Dang tay = Lùi
+        if (leftWrist && rightWrist && leftShoulder && rightShoulder) {
+            if (leftWrist.visibility > 0.5 || rightWrist.visibility > 0.5) {
+                const shoulderW = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y) || 0.3;
+                const wristDist = Math.hypot(leftWrist.x - rightWrist.x, leftWrist.y - rightWrist.y);
+                const ratio = wristDist / shoulderW;
+                
+                // ratio < 0.9: Chụm tay -> Ga
+                if (ratio < 1.0) shouldGas = true;
+                // ratio > 1.8: Dang tay -> Phanh
+                if (ratio > 1.8) shouldBrake = true;
+            }
         }
     } else {
-        // hands mode
+        // hands mode (Nâng/Hạ)
         if (leftWrist && rightWrist && leftShoulder && rightShoulder) {
             if (leftWrist.visibility > 0.5 || rightWrist.visibility > 0.5) {
                 const hY1 = leftWrist.visibility > 0.5 ? leftWrist.y : rightWrist.y;
@@ -410,32 +433,22 @@ function processGestures(pl) {
         }
     }
 
-    if (autoGas) {
-        if (shouldBrake) {
-            triggerAction('jump', false);
-            triggerAction('duck', true);
-        } else {
-            triggerAction('jump', true);
-            triggerAction('duck', false);
-        }
-    } else {
-        triggerAction('jump', shouldGas);
-        triggerAction('duck', shouldBrake);
+    if (isAutoGas && !shouldBrake) {
+        shouldGas = true; 
     }
 
-    // 2. LEAN LEFT & RIGHT (Steering Modes)
-    let steerCmd = 0; // -1 (Right) to 1 (Left)
-    const modeEl = document.getElementById('steerMode');
-    const mode = (modeEl && modeEl.style.display !== 'none') ? modeEl.value : 'lean';
+    triggerAction('jump', shouldGas);
+    triggerAction('duck', shouldBrake);
+
+    // 2. STEERING (Trái / Phải)
+    let steerCmd = 0; 
+    const mode = document.getElementById('steerMode')?.value || 'all';
     
-    // A. Lean (NghiÃªng NgÆ°á»i)
+    // A. Lean (Nghiêng Người)
     if (mode === 'lean' || mode === 'all') {
         const shoulderX = (leftShoulder.x + rightShoulder.x) / 2;
         const hipX = (leftHip && rightHip) ? (leftHip.x + rightHip.x) / 2 : shoulderX;
         
-        // When subject leans to their physical Left, they move towards the physical Right of the unmirrored camera frame.
-        // So shoulderX INCREASES. If shoulderX > hipX, they are leaning LEFT.
-        // User reported it's reversed, meaning our previous mapping made them go Right. Let's flip it properly!
         const leanDelta = shoulderX - hipX;
         
         const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
@@ -446,33 +459,27 @@ function processGestures(pl) {
         else if (leanDelta < -threshR) steerCmd = -1; // -1 is RIGHT.
     }
     
-    // B. Steering Wheel (Cáº§m VÃ´ LÄƒng Tay)
+    // B. Steering Wheel (Cầm Vô Lăng Tay / Chụm Tay)
     if ((mode === 'wheel' || mode === 'all') && steerCmd === 0) {
-        if (leftWrist && rightWrist && leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
-            const handsMidY = (leftWrist.y + rightWrist.y) / 2;
-            const hipMidY = (leftHip && rightHip) ? (leftHip.y + rightHip.y) / 2 : 1.0;
-            
-            // Activate if hands are raised (above waist/hips)
-            if (handsMidY < hipMidY - 0.1) {
-                const dx = leftWrist.x - rightWrist.x; // Unmirrored: left wrist has larger X, so dx is positive
+        if (leftWrist && rightWrist && leftShoulder && rightShoulder) {
+            if (leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
                 const dy = leftWrist.y - rightWrist.y;
+                const shoulderW = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y) || 0.3;
+                const normalizedTilt = dy / shoulderW; // positive = left hand lower (Left turn)
                 
-                // Ensure hands are held apart to form a wheel
-                if (Math.abs(dx) > 0.05) {
-                    const wheelAngle = Math.atan2(dy, dx); // Angle in radians
-                    const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
-                    const thresh = isSteeringLeft ? (baseThresh * 2.5 - 0.05) : (baseThresh * 2.5);
-                    const threshR = isSteeringRight ? (baseThresh * 2.5 - 0.05) : (baseThresh * 2.5);
-                    
-                    // Turning Physical LEFT: left hand goes DOWN (larger Y), right UP (smaller Y). dy > 0. wheelAngle > 0.
-                    if (wheelAngle > thresh) steerCmd = 1; // LEFT
-                    else if (wheelAngle < -threshR) steerCmd = -1; // RIGHT
-                }
+                const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
+                // We use baseThresh * 2.5 to match the sensitivity scale of the UI slider which was designed for angles
+                const thresh = isSteeringLeft ? (baseThresh * 2.5 - 0.05) : (baseThresh * 2.5);
+                const threshR = isSteeringRight ? (baseThresh * 2.5 - 0.05) : (baseThresh * 2.5);
+                
+                // Turning Physical LEFT: left hand goes DOWN (larger Y), right UP (smaller Y). dy > 0.
+                if (normalizedTilt > thresh) steerCmd = 1; // LEFT
+                else if (normalizedTilt < -threshR) steerCmd = -1; // RIGHT
             }
         }
     }
     
-    // C. Head Tilt (NghiÃªng Äáº§u)
+    // C. Head Tilt (Nghiêng Đầu)
     if ((mode === 'head' || mode === 'all') && steerCmd === 0) {
         const leftEar = pl[7];
         const rightEar = pl[8];
