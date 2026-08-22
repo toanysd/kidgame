@@ -373,47 +373,32 @@ function processGestures(pl) {
     const leftVisible = leftWrist && leftWrist.visibility > 0.5;
     const rightVisible = rightWrist && rightWrist.visibility > 0.5;
 
-    // Ngưỡng phân biệt giơ cao / hạ thấp
-    const isLeftRaised = leftVisible && leftWrist.y < shoulderMidY + 0.18;
-    const isRightRaised = rightVisible && rightWrist.y < shoulderMidY + 0.18;
-    
-    const isLeftLow = !leftVisible || leftWrist.y > shoulderMidY + 0.25;
-    const isRightLow = !rightVisible || rightWrist.y > shoulderMidY + 0.25;
+    // 1. Kiểm tra vị trí tay so với vai (y nhỏ hơn là cao hơn vai)
+    const isLeftAboveShoulder = leftVisible && leftShoulder && (leftWrist.y < leftShoulder.y);
+    const isRightAboveShoulder = rightVisible && rightShoulder && (rightWrist.y < rightShoulder.y);
 
-    // A. NHẬN DIỆN VŨ KHÍ: J & K (Hạ một tay, giơ một tay)
-    if (isLeftRaised && isRightLow) {
+    const isLeftBelowShoulder = leftVisible && leftShoulder && (leftWrist.y >= leftShoulder.y);
+    const isRightBelowShoulder = rightVisible && rightShoulder && (rightWrist.y >= rightShoulder.y);
+
+    // A. NHẬN DIỆN VŨ KHÍ: J & K (Hạ một tay, giơ một tay qua vai)
+    if (isLeftAboveShoulder && !isRightAboveShoulder) {
         isPunchL = true; // Phím J
-    } else if (isRightRaised && isLeftLow) {
+    } else if (isRightAboveShoulder && !isLeftAboveShoulder) {
         isPunchR = true; // Phím K
     }
 
     // B. NHẬN DIỆN TIẾN (W), PHANH (S), THẢ TRÔI
     if (!isPunchL && !isPunchR) {
-        if (isLeftRaised && isRightRaised) {
-            // Cả 2 tay đều giơ lên
-            const wristDist = Math.hypot(leftWrist.x - rightWrist.x, leftWrist.y - rightWrist.y);
-            const handsRatio = wristDist / shoulderW;
-
-            // Đo độ duỗi của 2 tay so với vai (Khoảng cách cổ tay - vai)
-            const leftExt = Math.hypot(leftWrist.x - leftShoulder.x, leftWrist.y - leftShoulder.y);
-            const rightExt = Math.hypot(rightWrist.x - rightShoulder.x, rightWrist.y - rightShoulder.y);
-            const avgExt = (leftExt + rightExt) / 2;
-            const extRatio = avgExt / shoulderW;
-
-            if (extRatio < 0.65) {
-                // 1. Co 2 tay lại sát ngực (gấp khuỷu tay) -> Phanh (S)
-                shouldBrake = true;
-            } else if (handsRatio < 0.60) {
-                // 2. Chụm 2 tay sát nhau (ở giữa) -> Thả trôi (Không Ga, Không Phanh)
-                shouldGas = false;
-                shouldBrake = false;
-            } else {
-                // 3. Mở rộng 2 tay duỗi ra như cầm vô lăng -> Ga (W)
-                shouldGas = true;
-            }
-        } else if (isLeftLow && isRightLow) {
-            // Hạ cả 2 tay xuống (hoặc giấu tay khỏi camera) -> Phanh (S)
+        if (isLeftAboveShoulder && isRightAboveShoulder) {
+            // 1. Cả 2 tay giơ cao hơn vai -> Tiến (W)
+            shouldGas = true;
+        } else if (isLeftBelowShoulder && isRightBelowShoulder) {
+            // 2. Cả 2 tay hạ thấp dưới đường nối hai vai -> Phanh (S)
             shouldBrake = true;
+        } else if (!leftVisible && !rightVisible) {
+            // 3. Hai tay hạ khỏi màn hình (không thấy tay) -> Thả trôi (Không Ga, Không Phanh)
+            shouldGas = false;
+            shouldBrake = false;
         }
     }
 
@@ -427,8 +412,8 @@ function processGestures(pl) {
     triggerAction('punchR', isPunchR);  // Phím K
 
     // C. BẺ LÁI A / D (Nghiêng trái / phải)
-    // 1. Cầm vô lăng (Bằng 2 tay)
-    if ((steerMode === 'wheel' || steerMode === 'all') && isLeftRaised && isRightRaised) {
+    // 1. Cầm vô lăng (Khi cả 2 tay đang nhìn thấy trên màn hình)
+    if ((steerMode === 'wheel' || steerMode === 'all') && leftVisible && rightVisible) {
         const dy = leftWrist.y - rightWrist.y;
         const normalizedTilt = dy / shoulderW; // Dương = tay trái thấp hơn -> Rẽ Trái
 
