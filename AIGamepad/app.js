@@ -512,34 +512,35 @@ function processGestures(pl) {
         triggerAction('right', false);
     }
 
-    // 3. PUNCH (Yêu cầu xòe tay)
-    const leftIndex = pl[19];
-    const rightIndex = pl[20];
-    
-    let shoulderWidth = 0.3; // Default fallback
-    if (leftShoulder && rightShoulder) {
-        shoulderWidth = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y) || 0.3;
-    }
-    
-    if (leftWrist && leftIndex && leftShoulder && leftWrist.visibility > 0.5 && leftIndex.visibility > 0.5) {
-        const leftExt = Math.hypot(leftWrist.x - leftShoulder.x, leftWrist.y - leftShoulder.y);
-        const handSize = Math.hypot(leftIndex.x - leftWrist.x, leftIndex.y - leftWrist.y);
-        const isOpen = (handSize / shoulderWidth) > 0.22; // Ngưỡng xòe tay
+    // 3. VŨ KHÍ & NITRO (J / K)
+    // Thay vì nhận diện ngón tay (không ổn định), dùng các tư thế rõ ràng hơn:
+    // Nitro (K - punchR): Chập 2 tay vào nhau (Clap)
+    // Bắn (J - punchL): Giơ 1 tay lên cao ngang đầu/mũi
+    let isClapping = false;
+    let isHandRaised = false;
+
+    if (leftWrist && rightWrist && leftShoulder && rightShoulder && leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
+        const shoulderW = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y) || 0.3;
+        const wristDist = Math.hypot(leftWrist.x - rightWrist.x, leftWrist.y - rightWrist.y);
         
-        triggerAction('punchL', leftExt > 0.28 && isOpen);
-    } else {
-        triggerAction('punchL', false);
+        // Chập 2 tay vào nhau (khoảng cách rất nhỏ)
+        if (wristDist / shoulderW < 0.35) {
+            isClapping = true;
+        }
     }
     
-    if (rightWrist && rightIndex && rightShoulder && rightWrist.visibility > 0.5 && rightIndex.visibility > 0.5) {
-        const rightExt = Math.hypot(rightWrist.x - rightShoulder.x, rightWrist.y - rightShoulder.y);
-        const handSize = Math.hypot(rightIndex.x - rightWrist.x, rightIndex.y - rightWrist.y);
-        const isOpen = (handSize / shoulderWidth) > 0.22; // Ngưỡng xòe tay
-        
-        triggerAction('punchR', rightExt > 0.28 && isOpen);
-    } else {
-        triggerAction('punchR', false);
+    const nose = pl[0];
+    if (nose) {
+        // Giơ tay cao hơn mũi
+        if ((leftWrist && leftWrist.visibility > 0.5 && leftWrist.y < nose.y) || 
+            (rightWrist && rightWrist.visibility > 0.5 && rightWrist.y < nose.y)) {
+            isHandRaised = true;
+        }
     }
+
+    // Gán hành động: K (punchR) = Nitro (Clap), J (punchL) = Fire (Raise Hand)
+    triggerAction('punchR', isClapping);
+    triggerAction('punchL', isHandRaised);
 }
 
 function triggerAction(actionName, isTriggered) {
