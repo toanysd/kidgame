@@ -523,7 +523,7 @@ function startArcade(gameUrl) {
     connStatus.classList.add('connected');
     connText.innerText = "Chế độ Arcade";
 
-    // Contextual UI Configuration
+        // Contextual UI Configuration
     const mapJump = document.getElementById('map-jump');
     const mapDuck = document.getElementById('map-duck');
     const mapLeft = document.getElementById('map-left');
@@ -540,6 +540,14 @@ function startArcade(gameUrl) {
         mapRight.style.display = 'flex';
         mapPunchL.style.display = 'none';
         mapPunchR.style.display = 'none';
+    } else if (gameUrl.includes('claw.html')) {
+        steerConfig.style.display = 'none';
+        mapJump.style.display = 'flex';
+        mapDuck.style.display = 'none';
+        mapLeft.style.display = 'flex';
+        mapRight.style.display = 'flex';
+        mapPunchL.style.display = 'flex';
+        mapPunchR.style.display = 'none';
     } else if (gameUrl.includes('drum.html')) {
         steerConfig.style.display = 'none';
         mapJump.style.display = 'none';
@@ -549,6 +557,16 @@ function startArcade(gameUrl) {
         mapPunchL.style.display = 'flex';
         mapPunchR.style.display = 'flex';
     } else {
+        // default
+        steerConfig.style.display = 'none';
+        mapJump.style.display = 'flex';
+        mapDuck.style.display = 'flex';
+        mapLeft.style.display = 'flex';
+        mapRight.style.display = 'flex';
+        mapPunchL.style.display = 'flex';
+        mapPunchR.style.display = 'flex';
+    }
+ else {
         // default
         steerConfig.style.display = 'none';
         mapJump.style.display = 'flex';
@@ -656,3 +674,5 @@ window.addEventListener('message', (e) => {
         if (speedSlider) speedSlider.value = e.data.speed;
     }
 });
+
+

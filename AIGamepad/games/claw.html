@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gắp Thú Nhồi Bông</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #e0e7ff; color: #1e1b4b; font-family: sans-serif; }
+        canvas { display: block; margin: 0 auto; background: #c7d2fe; border-left: 10px solid #6366f1; border-right: 10px solid #6366f1; box-shadow: inset 0 0 50px rgba(0,0,0,0.2); }
+        #ui { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); font-size: 24px; font-weight: bold; text-shadow: 2px 2px 0 #fff; pointer-events: none; text-align: center; }
+        #gameOver { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 20px; text-align: center; border: 4px solid #6366f1; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .btn-restart { background: #6366f1; color: white; border: none; padding: 15px 30px; font-size: 20px; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 20px; box-shadow: 0 5px 0 #4338ca; }
+        .btn-restart:active { transform: translateY(5px); box-shadow: none; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        ĐIỂM: <span id="score" style="color: #6366f1;">0</span> <br>
+        <span style="font-size: 20px; color: #ef4444;">⏱️ <span id="timerDisplay">01:30</span></span>
+    </div>
+    <div id="gameOver">
+        <h1 style="color: #6366f1; margin-top:0;">🎮 HẾT GIỜ!</h1>
+        <p style="font-size: 20px;">Số thú gắp được: <span id="finalScore" style="color: #f59e0b; font-size: 28px; font-weight: bold;">0</span></p>
+        <button class="btn-restart" onclick="restart()">🔄 CHƠI LẠI (Nhấn SPACE)</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 400;
+        canvas.height = window.innerHeight;
+
+        const STATE = { IDLE: 0, DROP: 1, GRAB: 2, RETRACT: 3, RETURN: 4, RELEASE: 5 };
+        let state = STATE.IDLE;
+        
+        let claw = { x: 200, y: 50, speed: 4, item: null };
+        let prizes = [];
+        let score = 0;
+        let gameActive = true;
+        let timeLeft = 90; // 90 seconds
+        let lastTime = Date.now();
+
+        let keys = { a: false, d: false, w: false, s: false, j: false, m: false, space: false, arrowleft: false, arrowright: false };
+
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            keys[k] = true;
+            if ((k === ' ' || k === 'space') && !gameActive) restart();
+        });
+        window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+        
+        window.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'keyboard') {
+                const k = e.data.key.toLowerCase();
+                if (e.data.action === 'keydown') {
+                    keys[k] = true;
+                    if ((k === ' ' || k === 'space') && !gameActive) restart();
+                } else if (e.data.action === 'keyup') {
+                    keys[k] = false;
+                }
+            }
+        });
+        
+        window.addEventListener('touchstart', handleTouch);
+        window.addEventListener('mousedown', handleTouch);
+        function handleTouch(e) {
+            if(!gameActive) return;
+            const x = e.touches ? e.touches[0].clientX : e.clientX;
+            const y = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            // If touching lower screen, trigger DROP
+            if (y > window.innerHeight / 2) {
+                keys.j = true; 
+                setTimeout(() => keys.j = false, 100);
+            } else {
+                if (x < window.innerWidth / 2) { keys.a = true; keys.d = false; }
+                else { keys.d = true; keys.a = false; }
+            }
+        }
+        window.addEventListener('touchend', () => { keys.a = false; keys.d = false; });
+        window.addEventListener('mouseup', () => { keys.a = false; keys.d = false; });
+
+        function initPrizes() {
+            prizes = [];
+            const emojis = ['🧸', '🐼', '🐰', '🐶', '🦄', '🎁', '🎀', '🧊', '🦖', '🐳'];
+            for(let i=0; i<35; i++) {
+                prizes.push({
+                    x: 100 + Math.random() * (canvas.width - 130),
+                    y: canvas.height - 40 - Math.random() * 150,
+                    targetY: canvas.height - 40 - Math.random() * 120, // To rest on floor
+                    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+                    size: 35 + Math.random() * 20,
+                    id: Math.random()
+                });
+            }
+        }
+
+        function formatTime(s) {
+            const min = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return (min < 10 ? '0' : '') + min + ':' + (sec < 10 ? '0' : '') + sec;
+        }
+
+        function drawClaw() {
+            // Rope
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(claw.x, 0);
+            ctx.lineTo(claw.x, claw.y);
+            ctx.stroke();
+
+            // Head
+            ctx.fillStyle = '#f59e0b'; // Gold head
+            ctx.fillRect(claw.x - 15, claw.y - 10, 30, 20);
+            ctx.fillStyle = '#b45309';
+            ctx.fillRect(claw.x - 15, claw.y, 30, 5);
+
+            // Arms
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            
+            if (state === STATE.GRAB || state === STATE.RETRACT || state === STATE.RETURN || state === STATE.RELEASE) {
+                // Closed
+                ctx.moveTo(claw.x - 10, claw.y + 10);
+                ctx.lineTo(claw.x - 10, claw.y + 35);
+                ctx.lineTo(claw.x, claw.y + 45); // Hook inward
+                
+                ctx.moveTo(claw.x + 10, claw.y + 10);
+                ctx.lineTo(claw.x + 10, claw.y + 35);
+                ctx.lineTo(claw.x, claw.y + 45); // Hook inward
+            } else {
+                // Open
+                ctx.moveTo(claw.x - 10, claw.y + 10);
+                ctx.lineTo(claw.x - 30, claw.y + 35);
+                ctx.lineTo(claw.x - 20, claw.y + 45); 
+                
+                ctx.moveTo(claw.x + 10, claw.y + 10);
+                ctx.lineTo(claw.x + 30, claw.y + 35);
+                ctx.lineTo(claw.x + 20, claw.y + 45); 
+            }
+            ctx.stroke();
+        }
+
+        function drawEmoji(emoji, x, y, size) {
+            ctx.font = size + "px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(emoji, x, y);
+        }
+
+        function loop() {
+            if (!gameActive) return;
+            const now = Date.now();
+            const dt = now - lastTime;
+            lastTime = now;
+            
+            timeLeft -= dt / 1000;
+            if (timeLeft <= 0) {
+                timeLeft = 0;
+                gameOver();
+            }
+            document.getElementById('timerDisplay').innerText = formatTime(timeLeft);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Background details
+            ctx.fillStyle = '#a5b4fc';
+            ctx.fillRect(0, canvas.height - 180, canvas.width, 180); // Prize pit background
+
+            // Chute (Hole)
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, canvas.height - 150, 100, 150);
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(0, canvas.height - 150, 100, 10); // Lip of chute
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('PRIZE', 50, canvas.height - 75);
+
+            // Simulate prize physics (simple gravity)
+            for (let p of prizes) {
+                if (p.y < p.targetY) {
+                    p.y += 10; // Fall
+                }
+                drawEmoji(p.emoji, p.x, p.y, p.size);
+            }
+
+            // Draw captured item
+            if (claw.item && state !== STATE.RELEASE) {
+                drawEmoji(claw.item.emoji, claw.item.x, claw.item.y, claw.item.size);
+            }
+
+            // Draw Claw
+            drawClaw();
+            
+            // State Machine Logic
+            if (state === STATE.IDLE) {
+                // Move Left/Right
+                if (keys.a || keys.arrowleft) claw.x -= claw.speed;
+                if (keys.d || keys.arrowright) claw.x += claw.speed;
+                
+                // Bounds (Cannot go into the chute area directly)
+                if (claw.x < 110) claw.x = 110; 
+                if (claw.x > canvas.width - 20) claw.x = canvas.width - 20;
+
+                // Drop command
+                if (keys.w || keys.space || keys.j || keys.m) {
+                    state = STATE.DROP;
+                }
+            } else if (state === STATE.DROP) {
+                claw.y += 6;
+                
+                // Check if hit floor or prize
+                let hit = null;
+                for (let p of prizes) {
+                    if (claw.y + 40 >= p.y - p.size/2 && Math.abs(claw.x - p.x) < 30) {
+                        hit = p;
+                        break;
+                    }
+                }
+
+                if (hit || claw.y > canvas.height - 50) {
+                    state = STATE.GRAB;
+                    setTimeout(() => {
+                        // Grab logic: 80% chance to grab if hit perfectly
+                        if (hit && Math.random() > 0.2) {
+                            claw.item = hit;
+                            prizes = prizes.filter(p => p.id !== hit.id);
+                        }
+                        state = STATE.RETRACT;
+                    }, 400); // Wait 0.4s to close claws
+                }
+            } else if (state === STATE.RETRACT) {
+                claw.y -= 5;
+                if (claw.item) {
+                    claw.item.x = claw.x;
+                    claw.item.y = claw.y + 35;
+                    
+                    // Random slip chance (drama!)
+                    if (Math.random() < 0.005) {
+                        claw.item.targetY = canvas.height - 40; // Fall back to floor
+                        prizes.push(claw.item);
+                        claw.item = null;
+                    }
+                }
+                
+                if (claw.y <= 50) {
+                    claw.y = 50;
+                    state = STATE.RETURN;
+                }
+            } else if (state === STATE.RETURN) {
+                claw.x -= 4;
+                if (claw.item) {
+                    claw.item.x = claw.x;
+                    claw.item.y = claw.y + 35;
+                }
+                
+                if (claw.x <= 50) { // Hovering over chute
+                    state = STATE.RELEASE;
+                    setTimeout(() => {
+                        if (claw.item) {
+                            score += 10;
+                            document.getElementById('score').innerText = score;
+                            claw.item = null;
+                        }
+                        state = STATE.IDLE;
+                    }, 500);
+                }
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        function gameOver() {
+            gameActive = false;
+            document.getElementById('gameOver').style.display = 'block';
+            document.getElementById('finalScore').innerText = Math.floor(score / 10);
+        }
+
+        window.restart = function() {
+            if (gameActive) return;
+            claw = { x: 200, y: 50, speed: 4, item: null };
+            score = 0;
+            state = STATE.IDLE;
+            timeLeft = 90;
+            keys = { a: false, d: false, w: false, s: false, j: false, m: false, space: false, arrowleft: false, arrowright: false };
+            gameActive = true;
+            lastTime = Date.now();
+            document.getElementById('score').innerText = score;
+            document.getElementById('gameOver').style.display = 'none';
+            initPrizes();
+            loop();
+        }
+
+        initPrizes();
+        lastTime = Date.now();
+        loop();
+    </script>
+</body>
+</html>
