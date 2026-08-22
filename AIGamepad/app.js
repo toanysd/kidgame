@@ -380,25 +380,34 @@ function processGestures(pl) {
     if (mode === 'lean' || mode === 'all') {
         const shoulderX = (leftShoulder.x + rightShoulder.x) / 2;
         const hipX = (leftHip && rightHip) ? (leftHip.x + rightHip.x) / 2 : shoulderX;
+        
+        // When subject leans to their physical Left, they move towards the physical Right of the unmirrored camera frame.
+        // So shoulderX INCREASES. If shoulderX > hipX, they are leaning LEFT.
+        // User reported it's reversed, meaning our previous mapping made them go Right. Let's flip it properly!
         const leanDelta = shoulderX - hipX;
         
-        const threshL = isSteeringLeft ? 0.05 : 0.08;
-        const threshR = isSteeringRight ? -0.05 : -0.08;
+        const thresh = isSteeringLeft ? 0.05 : 0.08;
+        const threshR = isSteeringRight ? 0.05 : 0.08;
         
-        if (leanDelta > threshL) steerCmd = 1;
-        else if (leanDelta < threshR) steerCmd = -1;
+        // FIX: leanDelta > 0 means leaning to Physical Left. We should steer LEFT (1).
+        // Wait, if it was going right before, we just flip it:
+        if (leanDelta > thresh) steerCmd = -1; // -1 is RIGHT. If user said it was reversed, we swap 1 and -1.
+        else if (leanDelta < -threshR) steerCmd = 1; // 1 is LEFT.
     }
     
     // B. Steering Wheel (Cầm Vô Lăng Tay)
     if ((mode === 'wheel' || mode === 'all') && steerCmd === 0) {
         if (leftWrist && rightWrist && leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
             if (leftWrist.y < leftShoulder.y + 0.15 && rightWrist.y < rightShoulder.y + 0.15) {
-                const heightDiff = rightWrist.y - leftWrist.y;
-                const threshL = isSteeringLeft ? 0.08 : 0.15;
-                const threshR = isSteeringRight ? -0.08 : -0.15;
+                // If steering LEFT, right hand goes UP (smaller Y), left hand goes DOWN (larger Y).
+                // So leftWrist.y - rightWrist.y is POSITIVE.
+                const wristDelta = leftWrist.y - rightWrist.y;
                 
-                if (heightDiff > threshL) steerCmd = 1;
-                else if (heightDiff < threshR) steerCmd = -1;
+                const thresh = isSteeringLeft ? 0.08 : 0.15;
+                const threshR = isSteeringRight ? 0.08 : 0.15;
+                
+                if (wristDelta > thresh) steerCmd = 1; // LEFT
+                else if (wristDelta < -threshR) steerCmd = -1; // RIGHT
             }
         }
     }
@@ -408,12 +417,15 @@ function processGestures(pl) {
         const leftEar = pl[7];
         const rightEar = pl[8];
         if (leftEar && rightEar) {
-            const headAngle = Math.atan2(rightEar.y - leftEar.y, rightEar.x - leftEar.x);
-            const threshL = isSteeringLeft ? 0.10 : 0.20;
-            const threshR = isSteeringRight ? -0.10 : -0.20;
+            // If tilting head LEFT, left ear goes DOWN (larger Y), right ear goes UP (smaller Y).
+            // So leftEar.y - rightEar.y is POSITIVE.
+            const earDelta = leftEar.y - rightEar.y;
             
-            if (headAngle > threshL) steerCmd = 1;
-            else if (headAngle < threshR) steerCmd = -1;
+            const thresh = isSteeringLeft ? 0.03 : 0.05;
+            const threshR = isSteeringRight ? 0.03 : 0.05;
+            
+            if (earDelta > thresh) steerCmd = 1; // LEFT
+            else if (earDelta < -threshR) steerCmd = -1; // RIGHT
         }
     }
 
