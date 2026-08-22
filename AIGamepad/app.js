@@ -355,24 +355,11 @@ function processGestures(pl) {
     
     // 1. JUMP & DUCK (Gas / Brake)
     const gasEl = document.getElementById('gasMode');
-    const gasMode = (gasEl && gasEl.style.display !== 'none') ? gasEl.value : 'hands';
+    const gasMode = (gasEl && gasEl.style.display !== 'none') ? gasEl.value : 'distance';
     
-    const autoGas = document.getElementById('autoGas') ? document.getElementById('autoGas').checked : false;
+    const isAutoGas = document.getElementById('autoGas') ? document.getElementById('autoGas').checked : false;
     let shouldGas = false;
     let shouldBrake = false;
-
-    if (gasMode === 'body') {
-        const leftAnkle = pl[27];
-        const rightAnkle = pl[28];
-        
-        if (leftShoulder && rightShoulder && leftHip && rightHip && leftAnkle && rightAnkle) {
-            const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-            const hipY = (leftHip.y + rightHip.y) / 2;
-            const ankleY = (leftAnkle.y + rightAnkle.y) / 2;
-            
-            const bodyHeight = ankleY - shoulderY;
-    const gasMode = document.getElementById('gasMode')?.value || 'distance';
-    const isAutoGas = document.getElementById('autoGas')?.checked;
 
     if (gasMode === 'head') {
         const nose = pl[0];
@@ -529,7 +516,6 @@ function processGestures(pl) {
         }
     }
     
-    const nose = pl[0];
     if (nose) {
         // Giơ tay cao hơn mũi
         if ((leftWrist && leftWrist.visibility > 0.5 && leftWrist.y < nose.y) || 
