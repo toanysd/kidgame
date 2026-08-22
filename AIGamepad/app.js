@@ -337,57 +337,84 @@ function processGestures(pl) {
 
     const leftAnkle = pl[27];
     const rightAnkle = pl[28];
-
     // Current State for Hysteresis
     const isSteeringLeft = activeKeys.has('left');
     const isSteeringRight = activeKeys.has('right');
     const isJumping = activeKeys.has('jump');
     const isDucking = activeKeys.has('duck');
-
-    // 1. JUMP & DUCK (Ga / Phanh)
-    const gasModeEl = document.getElementById('gasMode');
-    const gasMode = (gasModeEl && gasModeEl.style.display !== 'none') ? gasModeEl.value : 'head';
     
-    if (gasMode === 'body') {
-        const hipY = (leftHip && rightHip) ? (leftHip.y + rightHip.y) / 2 : null;
-        const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-        const ankleY = (leftAnkle && rightAnkle) ? (leftAnkle.y + rightAnkle.y) / 2 : null;
+    // 1. JUMP & DUCK (Gas / Brake)
+    const gasEl = document.getElementById('gasMode');
+    const gasMode = (gasEl && gasEl.style.display !== 'none') ? gasEl.value : 'hands';
+    
+    const autoGas = document.getElementById('autoGas') ? document.getElementById('autoGas').checked : false;
+    let shouldGas = false;
+    let shouldBrake = false;
 
-        if (hipY && ankleY) {
+    if (gasMode === 'body') {
+        const leftAnkle = pl[27];
+        const rightAnkle = pl[28];
+        
+        if (leftShoulder && rightShoulder && leftHip && rightHip && leftAnkle && rightAnkle) {
+            const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+            const hipY = (leftHip.y + rightHip.y) / 2;
+            const ankleY = (leftAnkle.y + rightAnkle.y) / 2;
+            
             const bodyHeight = ankleY - shoulderY;
             const legLength = ankleY - hipY;
             const ratio = legLength / bodyHeight;
             
-            // Jump hysteresis
-            const jumpThresh = isJumping ? 0.65 : 0.72;
-            if (ratio > jumpThresh && ankleY < 0.8) triggerAction('jump', true);
-            else triggerAction('jump', false);
+            if (ratio > (isJumping ? 0.65 : 0.72) && ankleY < 0.8) shouldGas = true;
+            if (ratio < (isDucking ? 0.45 : 0.40)) shouldBrake = true;
+        }
+    } else if (gasMode === 'head') {
+        const nose = pl[0];
+        if (nose && leftShoulder && rightShoulder) {
+            const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
+            const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x) || 0.1;
             
-            // Duck hysteresis
-            const duckThresh = isDucking ? 0.45 : 0.40;
-            if (ratio < duckThresh) triggerAction('duck', true);
-            else triggerAction('duck', false);
+            const pitchRatio = (shoulderMidY - nose.y) / shoulderWidth;
+            const baseSens = parseFloat(document.getElementById('pitchSensSlider')?.value) || 0.10;
+            
+            const jumpThresh = isJumping ? (1.20 + baseSens - 0.05) : (1.20 + baseSens);
+            const duckThresh = isDucking ? (1.00 - baseSens + 0.05) : (1.00 - baseSens);
+
+            if (pitchRatio > jumpThresh) shouldGas = true;
+            if (pitchRatio < duckThresh) shouldBrake = true;
         }
     } else {
-        // Head Pitch (Ngá»­a / CÃºi)
-        const nose = pl[0];
-        const leftEar = pl[7];
-        const rightEar = pl[8];
-        if (nose && leftEar && rightEar) {
-            const earMidY = (leftEar.y + rightEar.y) / 2;
-            const pitchDelta = nose.y - earMidY; 
-            
-            // pitchDelta < 0 means Nose is HIGHER than Ears (Ngá»­a Ä‘áº§u) -> Ga (Jump)
-            // pitchDelta > 0 means Nose is LOWER than Ears (CÃºi Ä‘áº§u) -> Phanh (Duck)
-            
-            const jumpThresh = isJumping ? -0.01 : -0.03;
-            if (pitchDelta < jumpThresh) triggerAction('jump', true);
-            else triggerAction('jump', false);
-            
-            const duckThresh = isDucking ? 0.05 : 0.08;
-            if (pitchDelta > duckThresh) triggerAction('duck', true);
-            else triggerAction('duck', false);
+        // hands mode
+        if (leftWrist && rightWrist && leftShoulder && rightShoulder) {
+            // Check visibility to avoid false positives when hands are dropped
+            if (leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
+                const handsMidY = (leftWrist.y + rightWrist.y) / 2;
+                const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
+                
+                // Nâng tay cao hơn vai -> Ga
+                if (handsMidY < shoulderMidY - 0.05) shouldGas = true;
+                
+                // Hạ tay thấp hơn vai (khoảng trước bụng) -> Phanh
+                if (handsMidY > shoulderMidY + 0.25) shouldBrake = true;
+            } else {
+                // Tay biến mất khỏi màn hình -> Phanh
+                shouldBrake = true;
+            }
+        } else {
+            shouldBrake = true;
         }
+    }
+
+    if (autoGas) {
+        if (shouldBrake) {
+            triggerAction('jump', false);
+            triggerAction('duck', true);
+        } else {
+            triggerAction('jump', true);
+            triggerAction('duck', false);
+        }
+    } else {
+        triggerAction('jump', shouldGas);
+        triggerAction('duck', shouldBrake);
     }
 
     // 2. LEAN LEFT & RIGHT (Steering Modes)
