@@ -387,20 +387,32 @@ function processGestures(pl) {
         isPunchR = true; // Phím K
     }
 
-    // B. NHẬN DIỆN TIẾN & LÙI (W / S)
+    // B. NHẬN DIỆN TIẾN (W), PHANH (S), THẢ TRÔI
     if (!isPunchL && !isPunchR) {
         if (isLeftRaised && isRightRaised) {
             // Cả 2 tay đều giơ lên
             const wristDist = Math.hypot(leftWrist.x - rightWrist.x, leftWrist.y - rightWrist.y);
-            const ratio = wristDist / shoulderW;
+            const handsRatio = wristDist / shoulderW;
 
-            // Chụm tay, giơ cao là W
-            if (ratio < 1.35) {
+            // Đo độ duỗi của 2 tay so với vai (Khoảng cách cổ tay - vai)
+            const leftExt = Math.hypot(leftWrist.x - leftShoulder.x, leftWrist.y - leftShoulder.y);
+            const rightExt = Math.hypot(rightWrist.x - rightShoulder.x, rightWrist.y - rightShoulder.y);
+            const avgExt = (leftExt + rightExt) / 2;
+            const extRatio = avgExt / shoulderW;
+
+            if (extRatio < 0.65) {
+                // 1. Co 2 tay lại sát ngực (gấp khuỷu tay) -> Phanh (S)
+                shouldBrake = true;
+            } else if (handsRatio < 0.60) {
+                // 2. Chụm 2 tay sát nhau (ở giữa) -> Thả trôi (Không Ga, Không Phanh)
+                shouldGas = false;
+                shouldBrake = false;
+            } else {
+                // 3. Mở rộng 2 tay duỗi ra như cầm vô lăng -> Ga (W)
                 shouldGas = true;
             }
-            // Tách tay ra là hủy W (không ga, để trôi xe)
         } else if (isLeftLow && isRightLow) {
-            // Hạ cả 2 tay xuống (hoặc giấu tay khỏi camera) là S (Lùi/Phanh)
+            // Hạ cả 2 tay xuống (hoặc giấu tay khỏi camera) -> Phanh (S)
             shouldBrake = true;
         }
     }
