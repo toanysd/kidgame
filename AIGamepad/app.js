@@ -500,15 +500,33 @@ function processGestures(pl) {
         triggerAction('right', false);
     }
 
-    // 3. PUNCH
-    if (leftWrist && leftShoulder) {
-        const leftExt = Math.hypot(leftWrist.x - leftShoulder.x, leftWrist.y - leftShoulder.y);
-        triggerAction('punchL', leftExt > 0.28);
+    // 3. PUNCH (Yêu cầu xòe tay)
+    const leftIndex = pl[19];
+    const rightIndex = pl[20];
+    
+    let shoulderWidth = 0.3; // Default fallback
+    if (leftShoulder && rightShoulder) {
+        shoulderWidth = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y) || 0.3;
     }
     
-    if (rightWrist && rightShoulder) {
+    if (leftWrist && leftIndex && leftShoulder && leftWrist.visibility > 0.5 && leftIndex.visibility > 0.5) {
+        const leftExt = Math.hypot(leftWrist.x - leftShoulder.x, leftWrist.y - leftShoulder.y);
+        const handSize = Math.hypot(leftIndex.x - leftWrist.x, leftIndex.y - leftWrist.y);
+        const isOpen = (handSize / shoulderWidth) > 0.22; // Ngưỡng xòe tay
+        
+        triggerAction('punchL', leftExt > 0.28 && isOpen);
+    } else {
+        triggerAction('punchL', false);
+    }
+    
+    if (rightWrist && rightIndex && rightShoulder && rightWrist.visibility > 0.5 && rightIndex.visibility > 0.5) {
         const rightExt = Math.hypot(rightWrist.x - rightShoulder.x, rightWrist.y - rightShoulder.y);
-        triggerAction('punchR', rightExt > 0.28);
+        const handSize = Math.hypot(rightIndex.x - rightWrist.x, rightIndex.y - rightWrist.y);
+        const isOpen = (handSize / shoulderWidth) > 0.22; // Ngưỡng xòe tay
+        
+        triggerAction('punchR', rightExt > 0.28 && isOpen);
+    } else {
+        triggerAction('punchR', false);
     }
 }
 
