@@ -566,16 +566,7 @@ function startArcade(gameUrl) {
         mapPunchL.style.display = 'flex';
         mapPunchR.style.display = 'flex';
     }
- else {
-        // default
-        steerConfig.style.display = 'none';
-        mapJump.style.display = 'flex';
-        mapDuck.style.display = 'flex';
-        mapLeft.style.display = 'flex';
-        mapRight.style.display = 'flex';
-        mapPunchL.style.display = 'flex';
-        mapPunchR.style.display = 'flex';
-    }
+
     
     initCamera();
 
