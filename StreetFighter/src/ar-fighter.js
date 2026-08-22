@@ -407,14 +407,17 @@ export class ARFighter {
     }
 
     startMoveNetLoop() {
+        let isProcessing = false;
         const detectFrame = async () => {
-            if (this.videoElement && this.videoElement.readyState >= 2 && this.detector) {
+            if (!isProcessing && this.videoElement && this.videoElement.readyState >= 2 && this.detector) {
+                isProcessing = true;
                 try {
                     const poses = await this.detector.estimatePoses(this.videoElement);
                     this.onMultiPoseResults(poses);
                 } catch (err) {
                     // Frame estimation error
                 }
+                isProcessing = false;
             }
             requestAnimationFrame(detectFrame);
         };
@@ -433,7 +436,7 @@ export class ARFighter {
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
         });
         pose.setOptions({
-            modelComplexity: 1,
+            modelComplexity: 0, // Tối ưu iPhone
             smoothLandmarks: true,
             minDetectionConfidence: 0.65,
             minTrackingConfidence: 0.65
@@ -444,12 +447,15 @@ export class ARFighter {
         });
 
         let lastTime = -1;
+        let isProcessing = false;
         const processFrame = async () => {
-            if (this.videoElement && this.videoElement.readyState >= 2 && this.videoElement.currentTime !== lastTime) {
+            if (!isProcessing && this.videoElement && this.videoElement.readyState >= 2 && this.videoElement.currentTime !== lastTime) {
+                isProcessing = true;
                 lastTime = this.videoElement.currentTime;
                 try {
                     await pose.send({ image: this.videoElement });
                 } catch (e) {}
+                isProcessing = false;
             }
             requestAnimationFrame(processFrame);
         };

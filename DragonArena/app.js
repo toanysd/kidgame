@@ -453,7 +453,7 @@ function initCamera() {
     });
 
     poseDetector.setOptions({
-        modelComplexity: 1,
+        modelComplexity: 0, // Tối ưu cho Mobile/iPhone
         smoothLandmarks: true,
         minDetectionConfidence: 0.6,
         minTrackingConfidence: 0.6
@@ -470,8 +470,8 @@ function initCamera() {
             onFrame: async () => {
                 await poseDetector.send({ image: videoElement });
             },
-            width: 640,
-            height: 480
+            width: 480,
+            height: 360
         });
         cam.start();
     }
@@ -481,12 +481,15 @@ function initCamera() {
 
 function startCameraLoop() {
     let lastTime = -1;
+    let isProcessing = false;
     const loop = async () => {
-        if (videoElement.readyState >= 2 && videoElement.currentTime !== lastTime) {
+        if (!isProcessing && videoElement.readyState >= 2 && videoElement.currentTime !== lastTime) {
+            isProcessing = true;
             lastTime = videoElement.currentTime;
             try {
                 await poseDetector.send({ image: videoElement });
             } catch (e) {}
+            isProcessing = false;
         }
         requestAnimationFrame(loop);
     };
