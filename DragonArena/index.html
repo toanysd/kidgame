@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Đấu Trường Rồng & Robot AR - KidGame</title>
+    <link rel="stylesheet" href="style.css?v=1.0.0">
+
+    <!-- MediaPipe Pose & Camera Utils -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- Hidden Assets -->
+    <div style="display: none;">
+        <img id="imgArenaBg" src="../img/arena_bg.png" alt="Arena Background">
+        <img id="imgBossDragon" src="../img/boss_monster.png" alt="Titan Dragon Boss">
+        <img id="imgMinionDragon" src="../img/monster.png" alt="Minion Monster">
+        <img id="imgRobotArmor" src="../img/robot.png" alt="Robot Armor Suit">
+        <img id="imgRobotFighter" src="../img/robot_fighter.png" alt="Robot Fighter">
+    </div>
+
+    <!-- Main Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- UI Overlay -->
+    <div id="ui-container">
+        <!-- Top Bar: Back button, Boss HP Bar, Score -->
+        <div class="top-bar">
+            <a href="../index.html" class="back-btn">
+                <span>←</span> Trở về Hub
+            </a>
+
+            <!-- Boss Health HUD -->
+            <div class="boss-hud" id="bossHud">
+                <div class="boss-title-row">
+                    <span class="boss-name" id="bossNameLabel">🐉 RỒNG LỬA TITAN (BOSS)</span>
+                    <span class="boss-hp-text" id="bossHpText">HP: 1000 / 1000</span>
+                </div>
+                <div class="hp-bar-container">
+                    <div class="hp-bar-fill" id="bossHpFill"></div>
+                    <div class="hp-bar-sheen"></div>
+                </div>
+            </div>
+
+            <!-- Stats: Score & Combo -->
+            <div class="stats-box">
+                <div class="score-badge" id="scoreBadge">⭐ ĐIỂM: 0</div>
+                <div class="combo-text" id="comboText">🔥 5x COMBO!</div>
+            </div>
+        </div>
+
+        <!-- Mega Buster Charge Indicator -->
+        <div class="mega-bar-container" id="megaBarContainer">
+            <span class="mega-title" id="megaTitle">⚡ NĂNG LƯỢNG ĐẠI BÁC MEGA BUSTER</span>
+            <div class="mega-bar-bg">
+                <div class="mega-bar-fill" id="megaBarFill"></div>
+            </div>
+        </div>
+
+        <!-- Gesture Guide Cards -->
+        <div class="gesture-help-bar">
+            <div class="gesture-card" id="cardPunch">
+                <div class="gesture-icon">👊</div>
+                <div class="gesture-info">
+                    <span class="gesture-name">Đấm Thẳng</span>
+                    <span class="gesture-desc">Bắn Đạn Laser / Tên Lửa</span>
+                </div>
+            </div>
+            <div class="gesture-card" id="cardShield">
+                <div class="gesture-icon">🛡️</div>
+                <div class="gesture-info">
+                    <span class="gesture-name">Bắt Chéo Tay</span>
+                    <span class="gesture-desc">Bung Khiên Phản Cầu Lửa</span>
+                </div>
+            </div>
+            <div class="gesture-card" id="cardMega">
+                <div class="gesture-icon">⚡</div>
+                <div class="gesture-info">
+                    <span class="gesture-name">Chụm 2 Tay</span>
+                    <span class="gesture-desc">Tụ Đại Bác Mega Buster</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Modal -->
+    <div class="modal-overlay" id="startModal">
+        <div class="modal-box">
+            <h1 class="modal-title">⚔️ ĐẤU TRƯỜNG RỒNG AR ⚔️</h1>
+            <p class="modal-desc">
+                Hóa thân thành <strong>Siêu Chiến Binh Robot</strong>!<br>
+                Đứng trước camera, tung cú đấm bắn laser, bật khiên chống lửa và phóng đại bác Mega Buster tiêu diệt Rồng Lửa Khổng Lồ!
+            </p>
+            <button class="modal-btn" id="btnStartGame">🚀 VÀO TRẬN CHIẾN!</button>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div class="modal-overlay" id="victoryModal" style="display: none;">
+        <div class="modal-box" style="border-color: #fbbf24; box-shadow: 0 0 35px rgba(251, 191, 36, 0.6);">
+            <h1 class="modal-title" style="color: #fbbf24;">🏆 CHIẾN THẮNG RỰC RỠ! 🏆</h1>
+            <p class="modal-desc" id="victoryStats">
+                Bé đã đánh bại Rồng Lửa Titan và giải cứu thành phố không gian!
+            </p>
+            <button class="modal-btn" id="btnPlayAgain" style="background: linear-gradient(135deg, #f59e0b, #d97706); border-color: #fde68a;">🔄 CHƠI LẠI TRẬN MỚI</button>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="modal-overlay" id="gameOverModal" style="display: none;">
+        <div class="modal-box" style="border-color: #ef4444;">
+            <h1 class="modal-title" style="color: #ef4444;">💥 HẾT MÁU RỒI! 💥</h1>
+            <p class="modal-desc">
+                Rồng Lửa quá mạnh! Hãy nhớ bật khiên chắn 🛡️ khi thấy cầu lửa bay tới nhé!
+            </p>
+            <button class="modal-btn" id="btnRetry" style="background: linear-gradient(135deg, #ef4444, #b91c1c); border-color: #fca5a5;">⚡ THỬ LẠI NGAY</button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <span>Đang kết nối Camera AI & Tải Đấu Trường...</span>
+    </div>
+
+    <script src="app.js?v=1.0.0"></script>
+</body>
+</html>

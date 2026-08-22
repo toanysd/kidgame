@@ -527,16 +527,16 @@
             </div>
         </div>
 
-        <!-- Robot Wars (Placeholder) -->
-        <div class="game-card" style="cursor: default; opacity: 0.8;">
+        <!-- Dragon Arena AR -->
+        <div onclick="openGame('DragonArena/index.html')" class="game-card">
             <div class="card-image">
-                🤖🚀
+                🤖🐉
             </div>
             <div class="card-content">
-                <span class="tag coming-soon" id="t_soon">Sắp Ra Mắt</span>
-                <h2 class="card-title" id="t_rw_title">Đấu Trường Robot</h2>
-                <p class="card-desc" id="t_rw_desc">Lắp ráp robot khổng lồ của riêng bé và chiến đấu. Đang xây dựng nha!</p>
-                <div class="play-btn disabled" id="t_locked">Chưa mở khóa</div>
+                <span class="tag ar">Camera AI • Boss Battle</span>
+                <h2 class="card-title" id="t_rw_title">Đấu Trường Rồng & Robot</h2>
+                <p class="card-desc" id="t_rw_desc">Hóa thân thành Siêu Robot, đấm bắn laser và bung khiên diệt Rồng Lửa Titan!</p>
+                <div class="play-btn" id="t_play3">Chơi Ngay!</div>
             </div>
         </div>
     </div>
@@ -562,8 +562,8 @@
                 fn_desc: "Dùng tay múa như Ninja để chém trái cây nhé! Chơi cùng Sâu háu ăn, Cảnh sát chó và Tàu điện!",
                 sf_title: "Đánh Võ Phép Thuật",
                 sf_desc: "Đứng trước camera đấm đá, chưởng Hadouken! Hỗ trợ 2 người chơi trên 1 camera hoặc đối chiến online 2 máy!",
-                rw_title: "Đấu Trường Robot",
-                rw_desc: "Lắp ráp robot khổng lồ của riêng bé và chiến đấu. Đang xây dựng nha!",
+                rw_title: "Đấu Trường Rồng & Robot",
+                rw_desc: "Hóa thân thành Siêu Robot, đấm bắn laser và bung khiên diệt Rồng Lửa Titan!",
                 play: "Chơi Ngay!",
                 soon: "Sắp Ra Mắt",
                 locked: "Chưa mở khóa",
@@ -582,8 +582,8 @@
                 fn_desc: "手を使ってフルーツを切ろう！あおむし、ラブラドール警察、踏み切りと一緒に遊ぼう！",
                 sf_title: "魔法の格闘技",
                 sf_desc: "カメラの前でパンチ＆キック、波動拳！1台のカメラで2人プレイ、または2台の端末でオンライン対戦！",
-                rw_title: "ロボットバトル",
-                rw_desc: "自分だけの巨大ロボットを組み立てて戦おう。準備中だよ！",
+                rw_title: "ドラゴン＆ロボットアリーナ",
+                rw_desc: "スーパーロボットに変身し、レーザーとシールドで巨大な火竜タイタンを倒そう！",
                 play: "あそぶ！",
                 soon: "もうすぐ",
                 locked: "まだあそべない",
@@ -602,8 +602,8 @@
                 fn_desc: "Use your hands like a Ninja to slice fruits! Play with Caterpillar, Sheriff Labrador and Trains!",
                 sf_title: "Magic Fighter",
                 sf_desc: "Stand in front of the camera, punch, kick & shoot Hadouken! Supports 2 players on 1 camera or online 1v1 battle!",
-                rw_title: "Robot Arena",
-                rw_desc: "Build your own giant robot and fight. Currently under construction!",
+                rw_title: "Dragon & Robot Arena",
+                rw_desc: "Transform into a Super Robot, shoot lasers and raise energy shields to defeat the Titan Fire Dragon!",
                 play: "Play Now!",
                 soon: "Coming Soon",
                 locked: "Locked",
@@ -638,10 +638,11 @@
             document.getElementById('t_sf_desc').innerText = text.sf_desc;
             document.getElementById('t_rw_title').innerText = text.rw_title;
             document.getElementById('t_rw_desc').innerText = text.rw_desc;
-            document.getElementById('t_soon').innerText = text.soon;
-            document.getElementById('t_locked').innerText = text.locked;
-            document.getElementById('t_play1').innerText = text.play;
-            document.getElementById('t_play2').innerText = text.play;
+            if (document.getElementById('t_soon')) document.getElementById('t_soon').innerText = text.soon;
+            if (document.getElementById('t_locked')) document.getElementById('t_locked').innerText = text.locked;
+            if (document.getElementById('t_play1')) document.getElementById('t_play1').innerText = text.play;
+            if (document.getElementById('t_play2')) document.getElementById('t_play2').innerText = text.play;
+            if (document.getElementById('t_play3')) document.getElementById('t_play3').innerText = text.play;
             document.getElementById('closeGameBtn').innerText = text.home;
         }
 
