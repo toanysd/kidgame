@@ -201,21 +201,55 @@ function onPoseResults(results) {
     // 1. Draw Camera Feed
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    let targetX = 0;
+    let targetY = 0;
+    let targetW = canvas.width;
+    let targetH = canvas.height;
+
+    // In Arcade mode, draw camera as a small PiP in the bottom right corner
+    if (window.arcadeMode) {
+        targetW = 320;
+        targetH = 240;
+        targetX = canvas.width - targetW - 20;
+        targetY = canvas.height - targetH - 20;
+        
+        // Draw PiP border/background
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+        ctx.roundRect ? ctx.roundRect(targetX, targetY, targetW, targetH, 16) : ctx.fillRect(targetX, targetY, targetW, targetH);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#38bdf8';
+        ctx.stroke();
+    }
+    
     if (results.image) {
         ctx.save();
-        ctx.translate(canvas.width, 0);
+        
+        // Clip to rounded rect if supported, else normal rect
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(targetX, targetY, targetW, targetH, 16);
+        else ctx.rect(targetX, targetY, targetW, targetH);
+        ctx.clip();
+
+        ctx.translate(targetX + targetW, targetY);
         ctx.scale(-1, 1); // Mirror
-        // Draw video covering canvas (maintain aspect ratio)
+        
+        // Fit image into target rect (cover)
         const vRatio = results.image.width / results.image.height;
-        const cRatio = canvas.width / canvas.height;
-        let dWidth = canvas.width;
-        let dHeight = canvas.height;
+        const cRatio = targetW / targetH;
+        let dWidth = targetW;
+        let dHeight = targetH;
+        
         if (vRatio > cRatio) {
-            dWidth = canvas.height * vRatio;
+            dWidth = targetH * vRatio;
         } else {
-            dHeight = canvas.width / vRatio;
+            dHeight = targetW / vRatio;
         }
-        ctx.drawImage(results.image, (canvas.width - dWidth)/2, (canvas.height - dHeight)/2, dWidth, dHeight);
+        
+        const offsetX = (targetW - dWidth) / 2;
+        const offsetY = (targetH - dHeight) / 2;
+        
+        ctx.drawImage(results.image, offsetX, offsetY, dWidth, dHeight);
         ctx.restore();
     }
 
@@ -228,26 +262,34 @@ function onPoseResults(results) {
     const pl = results.poseLandmarks;
     
     // Draw Skeleton
-    drawSkeleton(pl);
+    drawSkeleton(pl, targetX, targetY, targetW, targetH);
     
     // 2. Gesture Logic
     processGestures(pl);
 }
 
-function drawSkeleton(landmarks) {
+function drawSkeleton(landmarks, tx, ty, tw, th) {
     ctx.save();
-    ctx.translate(canvas.width, 0);
+    
+    // Clip region
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(tx, ty, tw, th, 16);
+    else ctx.rect(tx, ty, tw, th);
+    ctx.clip();
+
+    ctx.translate(tx + tw, ty);
     ctx.scale(-1, 1);
     
     // Transform coordinates
     const vRatio = 640 / 480;
-    const cRatio = canvas.width / canvas.height;
-    let dWidth = canvas.width;
-    let dHeight = canvas.height;
-    if (vRatio > cRatio) dWidth = canvas.height * vRatio;
-    else dHeight = canvas.width / vRatio;
-    const offsetX = (canvas.width - dWidth)/2;
-    const offsetY = (canvas.height - dHeight)/2;
+    const cRatio = tw / th;
+    let dWidth = tw;
+    let dHeight = th;
+    if (vRatio > cRatio) dWidth = th * vRatio;
+    else dHeight = tw / vRatio;
+    
+    const offsetX = (tw - dWidth)/2;
+    const offsetY = (th - dHeight)/2;
 
     const getX = (x) => offsetX + x * dWidth;
     const getY = (y) => offsetY + y * dHeight;
