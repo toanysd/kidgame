@@ -28,14 +28,24 @@ let ws = null;
 let isConnected = false;
 
 function connectWebSocket() {
-    connText.innerText = "Äang káº¿t ná»‘i...";
+    connText.innerText = "Đang kết nối...";
     ws = new WebSocket('ws://localhost:8765');
     
     ws.onopen = () => {
         isConnected = true;
         connStatus.classList.add('connected');
-        connText.innerText = "ÄÃ£ Káº¿t Ná»‘i Server";
+        connText.innerText = "Đã Kết Nối Server";
         setupModal.style.display = 'none';
+        document.getElementById('steeringConfig').style.display = 'block';
+        
+        // Show context mapping
+        document.getElementById('map-jump').style.display = 'flex';
+        document.getElementById('map-duck').style.display = 'flex';
+        document.getElementById('map-left').style.display = 'flex';
+        document.getElementById('map-right').style.display = 'flex';
+        document.getElementById('map-punchL').style.display = 'flex';
+        document.getElementById('map-punchR').style.display = 'flex';
+        
         initCamera();
     };
     
@@ -385,22 +395,18 @@ function processGestures(pl) {
     } else {
         // hands mode
         if (leftWrist && rightWrist && leftShoulder && rightShoulder) {
-            // Check visibility to avoid false positives when hands are dropped
-            if (leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
-                const handsMidY = (leftWrist.y + rightWrist.y) / 2;
+            if (leftWrist.visibility > 0.5 || rightWrist.visibility > 0.5) {
+                const hY1 = leftWrist.visibility > 0.5 ? leftWrist.y : rightWrist.y;
+                const hY2 = rightWrist.visibility > 0.5 ? rightWrist.y : leftWrist.y;
+                const handsMidY = (hY1 + hY2) / 2;
                 const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
                 
                 // Nâng tay cao hơn vai -> Ga
-                if (handsMidY < shoulderMidY - 0.05) shouldGas = true;
+                if (handsMidY < shoulderMidY + 0.05) shouldGas = true;
                 
-                // Hạ tay thấp hơn vai (khoảng trước bụng) -> Phanh
-                if (handsMidY > shoulderMidY + 0.25) shouldBrake = true;
-            } else {
-                // Tay biến mất khỏi màn hình -> Phanh
-                shouldBrake = true;
+                // Hạ tay thấp xuống ngực/bụng -> Phanh
+                if (handsMidY > shoulderMidY + 0.30) shouldBrake = true;
             }
-        } else {
-            shouldBrake = true;
         }
     }
 
