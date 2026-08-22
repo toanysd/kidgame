@@ -398,16 +398,25 @@ function processGestures(pl) {
     // B. Steering Wheel (Cầm Vô Lăng Tay)
     if ((mode === 'wheel' || mode === 'all') && steerCmd === 0) {
         if (leftWrist && rightWrist && leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
-            if (leftWrist.y < leftShoulder.y + 0.15 && rightWrist.y < rightShoulder.y + 0.15) {
-                // If steering LEFT, right hand goes UP (smaller Y), left hand goes DOWN (larger Y).
-                // So leftWrist.y - rightWrist.y is POSITIVE.
-                const wristDelta = leftWrist.y - rightWrist.y;
+            const handsMidY = (leftWrist.y + rightWrist.y) / 2;
+            const hipMidY = (leftHip && rightHip) ? (leftHip.y + rightHip.y) / 2 : 1.0;
+            
+            // Activate if hands are raised (above waist/hips)
+            if (handsMidY < hipMidY - 0.1) {
+                const dx = leftWrist.x - rightWrist.x; // Unmirrored: left wrist has larger X, so dx is positive
+                const dy = leftWrist.y - rightWrist.y;
                 
-                const thresh = isSteeringLeft ? 0.08 : 0.15;
-                const threshR = isSteeringRight ? 0.08 : 0.15;
-                
-                if (wristDelta > thresh) steerCmd = 1; // LEFT
-                else if (wristDelta < -threshR) steerCmd = -1; // RIGHT
+                // Ensure hands are held apart to form a wheel
+                if (Math.abs(dx) > 0.05) {
+                    const wheelAngle = Math.atan2(dy, dx); // Angle in radians
+                    
+                    const thresh = isSteeringLeft ? 0.12 : 0.22; // ~12 degrees
+                    const threshR = isSteeringRight ? 0.12 : 0.22;
+                    
+                    // Turning Physical LEFT: left hand goes DOWN (larger Y), right UP (smaller Y). dy > 0. wheelAngle > 0.
+                    if (wheelAngle > thresh) steerCmd = 1; // LEFT
+                    else if (wheelAngle < -threshR) steerCmd = -1; // RIGHT
+                }
             }
         }
     }
