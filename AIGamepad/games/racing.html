@@ -8,15 +8,17 @@
         body { margin: 0; overflow: hidden; background: #22c55e; color: white; font-family: sans-serif; }
         canvas { display: block; margin: 0 auto; background: #334155; }
         #ui { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); font-size: 24px; font-weight: bold; text-shadow: 2px 2px 0 #000; pointer-events: none; }
-        #gameOver { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); padding: 40px; border-radius: 20px; text-align: center; border: 4px solid #f87171; }
+        #gameOver { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15, 23, 42, 0.9); padding: 40px; border-radius: 20px; text-align: center; border: 4px solid #f87171; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .btn-restart { background: #f87171; color: white; border: none; padding: 15px 30px; font-size: 20px; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 20px; box-shadow: 0 5px 0 #b91c1c; }
+        .btn-restart:active { transform: translateY(5px); box-shadow: none; }
     </style>
 </head>
 <body>
     <div id="ui">ĐIỂM: <span id="score">0</span></div>
     <div id="gameOver">
-        <h1 style="color: #f87171;">RẦM! ĐỤNG RỒI!</h1>
-        <p>Điểm của bé: <span id="finalScore">0</span></p>
-        <p>Bấm <strong>SPACE (Nhảy)</strong> để chơi lại</p>
+        <h1 style="color: #f87171; margin-top:0;">💥 RẦM! ĐỤNG RỒI!</h1>
+        <p style="font-size: 20px;">Điểm của bé: <span id="finalScore" style="color: #fbbf24; font-size: 24px; font-weight: bold;">0</span></p>
+        <button class="btn-restart" onclick="restart()">🔄 CHƠI LẠI (Nhấn SPACE)</button>
     </div>
     <canvas id="gameCanvas"></canvas>
 
@@ -26,7 +28,7 @@
         canvas.width = 400;
         canvas.height = window.innerHeight;
 
-        let car = { x: 175, y: canvas.height - 100, width: 50, height: 80, speed: 6 };
+        let car = { x: 175, y: canvas.height - 120, width: 60, height: 100, speed: 7 };
         let obstacles = [];
         let score = 0;
         let gameActive = true;
@@ -37,67 +39,102 @@
         window.addEventListener('keydown', (e) => {
             const k = e.key.toLowerCase();
             keys[k] = true;
-            if (k === ' ' && !gameActive) restart();
+            if ((k === ' ' || k === 'space') && !gameActive) restart();
         });
         window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+        
+        // Add touch/click support for moving
+        window.addEventListener('touchstart', handleTouch);
+        window.addEventListener('mousedown', handleTouch);
+        function handleTouch(e) {
+            if(!gameActive) return;
+            const x = e.touches ? e.touches[0].clientX : e.clientX;
+            if (x < window.innerWidth / 2) { keys.a = true; keys.d = false; }
+            else { keys.d = true; keys.a = false; }
+        }
+        window.addEventListener('touchend', () => { keys.a = false; keys.d = false; });
+        window.addEventListener('mouseup', () => { keys.a = false; keys.d = false; });
 
         function spawnObstacle() {
             if (!gameActive) return;
-            const width = 50 + Math.random() * 50;
-            const x = Math.random() * (canvas.width - width);
-            obstacles.push({ x: x, y: -100, width: width, height: 50, color: ['#ef4444', '#eab308', '#3b82f6'][Math.floor(Math.random()*3)] });
+            const isCar = Math.random() > 0.3;
+            const width = isCar ? 60 : 70;
+            const height = isCar ? 100 : 70;
+            const x = 50 + Math.random() * (canvas.width - width - 100);
+            
+            let emoji = isCar ? ['🚓', '🚕', '🚙'][Math.floor(Math.random()*3)] : ['🚧', '🪨'][Math.floor(Math.random()*2)];
+            
+            obstacles.push({ x: x, y: -100, width: width, height: height, emoji: emoji, isCar: isCar });
             setTimeout(spawnObstacle, 1000 + Math.random() * 1000 / speedMult);
         }
 
-        function drawCar(x, y) {
-            ctx.fillStyle = '#38bdf8';
-            ctx.fillRect(x, y, 50, 80);
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(x+5, y+15, 40, 20); // windshield
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(x-5, y+10, 10, 20); // wheels
-            ctx.fillRect(x+45, y+10, 10, 20);
-            ctx.fillRect(x-5, y+50, 10, 20);
-            ctx.fillRect(x+45, y+50, 10, 20);
+        function drawEmoji(emoji, x, y, size) {
+            ctx.font = size + "px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(emoji, x + size/2, y + size/2);
         }
 
         function loop() {
             if (!gameActive) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Road markings
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            for(let i=0; i<canvas.height; i+=40) {
-                ctx.fillRect(canvas.width/2 - 5, (i + Date.now()*0.5*speedMult) % canvas.height, 10, 20);
+            // Draw Road
+            ctx.fillStyle = '#475569'; // darker road
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Grass borders
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(0, 0, 40, canvas.height);
+            ctx.fillRect(canvas.width - 40, 0, 40, canvas.height);
+
+            // Draw Road markings (moving)
+            ctx.fillStyle = '#f8fafc';
+            for(let i=0; i<canvas.height; i+=60) {
+                ctx.fillRect(canvas.width/2 - 5, (i + Date.now()*0.5*speedMult) % canvas.height, 10, 30);
+                
+                // Draw side lines
+                ctx.fillRect(45, (i + Date.now()*0.5*speedMult) % canvas.height, 5, 40);
+                ctx.fillRect(canvas.width - 50, (i + Date.now()*0.5*speedMult) % canvas.height, 5, 40);
             }
 
-            // Move car
+            // Draw Scenery (Trees passing by)
+            for(let i=0; i<canvas.height; i+=150) {
+                drawEmoji('🌲', 5, (i + Date.now()*0.5*speedMult) % canvas.height, 30);
+                drawEmoji('🌲', canvas.width - 35, (i + Date.now()*0.5*speedMult) % canvas.height, 30);
+            }
+
+            // Move player car
             if (keys.a || keys.arrowleft) car.x -= car.speed;
             if (keys.d || keys.arrowright) car.x += car.speed;
             
             // Bounds
-            if (car.x < 0) car.x = 0;
-            if (car.x > canvas.width - car.width) car.x = canvas.width - car.width;
+            if (car.x < 40) car.x = 40;
+            if (car.x > canvas.width - 40 - car.width) car.x = canvas.width - 40 - car.width;
 
-            drawCar(car.x, car.y);
+            // Draw Player Car
+            drawEmoji('🏎️', car.x - 5, car.y - 10, 70);
 
             // Obstacles
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let obs = obstacles[i];
                 obs.y += 5 * speedMult;
-                ctx.fillStyle = obs.color;
-                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                
+                drawEmoji(obs.emoji, obs.x, obs.y, obs.width);
 
-                // Collision
-                if (car.x < obs.x + obs.width && car.x + car.width > obs.x &&
-                    car.y < obs.y + obs.height && car.y + car.height > obs.y) {
+                // Collision Detection (Hitbox reduction for fairness)
+                const hitPadding = 15;
+                if (car.x + hitPadding < obs.x + obs.width - hitPadding && 
+                    car.x + car.width - hitPadding > obs.x + hitPadding &&
+                    car.y + hitPadding < obs.y + obs.height - hitPadding && 
+                    car.y + car.height - hitPadding > obs.y + hitPadding) {
                     gameOver();
                 }
 
                 if (obs.y > canvas.height) {
                     obstacles.splice(i, 1);
                     score += 10;
-                    speedMult += 0.02;
+                    speedMult += 0.05;
                     document.getElementById('score').innerText = score;
                 }
             }
@@ -111,11 +148,13 @@
             document.getElementById('finalScore').innerText = score;
         }
 
-        function restart() {
+        window.restart = function() {
+            if (gameActive) return;
             car.x = 175;
             obstacles = [];
             score = 0;
             speedMult = 1;
+            keys = { a: false, d: false, arrowleft: false, arrowright: false };
             gameActive = true;
             document.getElementById('score').innerText = score;
             document.getElementById('gameOver').style.display = 'none';
