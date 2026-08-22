@@ -402,18 +402,23 @@ function processGestures(pl) {
             else if (deltaY > 0.06) shouldBrake = true;
         }
     } else if (gasMode === 'distance') {
-        // Chụm tay = Tiến, Dang tay = Lùi
+        // Chụm tay = Tiến, Không thấy tay (hoặc dang tay) = Lùi
         if (leftWrist && rightWrist && leftShoulder && rightShoulder) {
-            if (leftWrist.visibility > 0.5 || rightWrist.visibility > 0.5) {
+            if (leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
                 const shoulderW = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y) || 0.3;
                 const wristDist = Math.hypot(leftWrist.x - rightWrist.x, leftWrist.y - rightWrist.y);
                 const ratio = wristDist / shoulderW;
                 
-                // ratio < 0.9: Chụm tay -> Ga
-                if (ratio < 1.0) shouldGas = true;
+                // ratio < 1.2: Chụm tay -> Ga
+                if (ratio < 1.2) shouldGas = true;
                 // ratio > 1.8: Dang tay -> Phanh
-                if (ratio > 1.8) shouldBrake = true;
+                else if (ratio > 1.8) shouldBrake = true;
+            } else {
+                // Không thấy 1 trong 2 tay (có thể do dang quá rộng ra khỏi camera, hoặc buông thõng) -> Phanh
+                shouldBrake = true;
             }
+        } else {
+            shouldBrake = true;
         }
     } else {
         // hands mode (Nâng/Hạ)
