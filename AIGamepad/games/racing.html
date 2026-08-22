@@ -43,6 +43,19 @@
         });
         window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
         
+        // Listen for postMessage from parent iframe
+        window.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'keyboard') {
+                const k = e.data.key.toLowerCase();
+                if (e.data.action === 'keydown') {
+                    keys[k] = true;
+                    if ((k === ' ' || k === 'space') && !gameActive) restart();
+                } else if (e.data.action === 'keyup') {
+                    keys[k] = false;
+                }
+            }
+        });
+        
         // Add touch/click support for moving
         window.addEventListener('touchstart', handleTouch);
         window.addEventListener('mousedown', handleTouch);

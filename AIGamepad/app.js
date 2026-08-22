@@ -411,13 +411,12 @@ sendKey = function(action, keyChar) {
             }
             updateHUD();
 
-            // Dispatch
-            const event = new KeyboardEvent(action, {
-                key: keyChar,
-                code: 'Key' + keyChar.toUpperCase(),
-                bubbles: true
-            });
-            frame.contentWindow.dispatchEvent(event);
+            // Dispatch via postMessage to avoid CORS/file:// protocol errors
+            frame.contentWindow.postMessage({
+                type: 'keyboard',
+                action: action,
+                key: keyChar
+            }, '*');
         }
     } else {
         originalSendKey(action, keyChar);
