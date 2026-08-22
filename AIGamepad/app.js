@@ -353,138 +353,107 @@ function processGestures(pl) {
     const isJumping = activeKeys.has('jump');
     const isDucking = activeKeys.has('duck');
     
-    // 1. JUMP & DUCK (Gas / Brake)
-    const gasEl = document.getElementById('gasMode');
-    const gasMode = (gasEl && gasEl.style.display !== 'none') ? gasEl.value : 'distance';
-    
-    const isAutoGas = document.getElementById('autoGas') ? document.getElementById('autoGas').checked : false;
+    // 1. GESTURE RECOGNITION (ĐIỀU KHIỂN ĐUA XE & VŨ KHÍ)
     let shouldGas = false;
     let shouldBrake = false;
+    let isPunchL = false; // Phím J (Hạ tay phải, giơ tay trái)
+    let isPunchR = false; // Phím K (Hạ tay trái, giơ tay phải)
+    let steerCmd = 0;     // -1: D (Phải), 1: A (Trái)
 
-    if (gasMode === 'head') {
-        const nose = pl[0];
-        const leftEar = pl[7];
-        const rightEar = pl[8];
-        if (nose && leftEar && rightEar) {
-            const earMidY = (leftEar.y + rightEar.y) / 2;
-            const pitchDelta = nose.y - earMidY;
-            
-            const baseThresh = parseFloat(document.getElementById('pitchSensSlider')?.value) || 0.10;
-            const threshGas = GState.isJumping ? (baseThresh * 0.8) : baseThresh;
-            const threshBrake = GState.isDucking ? (baseThresh * 0.8) : baseThresh;
-            
-            if (pitchDelta < -threshGas) shouldGas = true;
-            else if (pitchDelta > threshBrake) shouldBrake = true;
-        }
-    } else if (gasMode === 'body') {
-        const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
-        if (GState.calibratingFrames < 30) {
-            GState.baselineY += shoulderMidY;
-            GState.calibratingFrames++;
-            if (GState.calibratingFrames === 30) GState.baselineY /= 30;
-        } else {
-            const deltaY = shoulderMidY - GState.baselineY;
-            GState.baselineY = GState.baselineY * 0.95 + shoulderMidY * 0.05;
-            if (deltaY < -0.06) shouldGas = true;
-            else if (deltaY > 0.06) shouldBrake = true;
-        }
-    } else if (gasMode === 'distance') {
-        // Chụm tay = Tiến, Không thấy tay (hoặc dang tay) = Lùi
-        if (leftWrist && rightWrist && leftShoulder && rightShoulder) {
-            if (leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
-                const shoulderW = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y) || 0.3;
-                const wristDist = Math.hypot(leftWrist.x - rightWrist.x, leftWrist.y - rightWrist.y);
-                const ratio = wristDist / shoulderW;
-                
-                // ratio < 1.2: Chụm tay -> Ga
-                if (ratio < 1.2) shouldGas = true;
-                // ratio > 1.8: Dang tay -> Phanh
-                else if (ratio > 1.8) shouldBrake = true;
-            } else {
-                // Không thấy 1 trong 2 tay (có thể do dang quá rộng ra khỏi camera, hoặc buông thõng) -> Phanh
-                shouldBrake = true;
+    const isAutoGas = document.getElementById('autoGas') ? document.getElementById('autoGas').checked : false;
+    const steerMode = document.getElementById('steerMode')?.value || 'all';
+
+    let shoulderW = 0.3;
+    let shoulderMidY = 0.5;
+    if (leftShoulder && rightShoulder) {
+        shoulderW = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y) || 0.3;
+        shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
+    }
+
+    const leftVisible = leftWrist && leftWrist.visibility > 0.5;
+    const rightVisible = rightWrist && rightWrist.visibility > 0.5;
+
+    // Ngưỡng phân biệt giơ cao / hạ thấp
+    const isLeftRaised = leftVisible && leftWrist.y < shoulderMidY + 0.18;
+    const isRightRaised = rightVisible && rightWrist.y < shoulderMidY + 0.18;
+    
+    const isLeftLow = !leftVisible || leftWrist.y > shoulderMidY + 0.25;
+    const isRightLow = !rightVisible || rightWrist.y > shoulderMidY + 0.25;
+
+    // A. NHẬN DIỆN VŨ KHÍ: J & K (Hạ một tay, giơ một tay)
+    if (isLeftRaised && isRightLow) {
+        isPunchL = true; // Phím J
+    } else if (isRightRaised && isLeftLow) {
+        isPunchR = true; // Phím K
+    }
+
+    // B. NHẬN DIỆN TIẾN & LÙI (W / S)
+    if (!isPunchL && !isPunchR) {
+        if (isLeftRaised && isRightRaised) {
+            // Cả 2 tay đều giơ lên
+            const wristDist = Math.hypot(leftWrist.x - rightWrist.x, leftWrist.y - rightWrist.y);
+            const ratio = wristDist / shoulderW;
+
+            // Chụm tay, giơ cao là W
+            if (ratio < 1.35) {
+                shouldGas = true;
             }
-        } else {
+            // Tách tay ra là hủy W (không ga, để trôi xe)
+        } else if (isLeftLow && isRightLow) {
+            // Hạ cả 2 tay xuống (hoặc giấu tay khỏi camera) là S (Lùi/Phanh)
             shouldBrake = true;
         }
-    } else {
-        // hands mode (Nâng/Hạ)
-        if (leftWrist && rightWrist && leftShoulder && rightShoulder) {
-            if (leftWrist.visibility > 0.5 || rightWrist.visibility > 0.5) {
-                const hY1 = leftWrist.visibility > 0.5 ? leftWrist.y : rightWrist.y;
-                const hY2 = rightWrist.visibility > 0.5 ? rightWrist.y : leftWrist.y;
-                const handsMidY = (hY1 + hY2) / 2;
-                const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
-                
-                // Nâng tay cao hơn vai -> Ga
-                if (handsMidY < shoulderMidY + 0.05) shouldGas = true;
-                
-                // Hạ tay thấp xuống ngực/bụng -> Phanh
-                if (handsMidY > shoulderMidY + 0.30) shouldBrake = true;
-            }
-        }
     }
 
-    if (isAutoGas && !shouldBrake) {
-        shouldGas = true; 
+    if (isAutoGas && !shouldBrake && !isPunchL && !isPunchR) {
+        shouldGas = true;
     }
 
-    triggerAction('jump', shouldGas);
-    triggerAction('duck', shouldBrake);
+    triggerAction('jump', shouldGas);  // Phím W
+    triggerAction('duck', shouldBrake); // Phím S
+    triggerAction('punchL', isPunchL);  // Phím J
+    triggerAction('punchR', isPunchR);  // Phím K
 
-    // 2. STEERING (Trái / Phải)
-    let steerCmd = 0; 
-    const mode = document.getElementById('steerMode')?.value || 'all';
-    
-    // A. Lean (Nghiêng Người)
-    if (mode === 'lean' || mode === 'all') {
+    // C. BẺ LÁI A / D (Nghiêng trái / phải)
+    // 1. Cầm vô lăng (Bằng 2 tay)
+    if ((steerMode === 'wheel' || steerMode === 'all') && isLeftRaised && isRightRaised) {
+        const dy = leftWrist.y - rightWrist.y;
+        const normalizedTilt = dy / shoulderW; // Dương = tay trái thấp hơn -> Rẽ Trái
+
+        const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
+        const thresh = isSteeringLeft ? (baseThresh * 2.2 - 0.04) : (baseThresh * 2.2);
+        const threshR = isSteeringRight ? (baseThresh * 2.2 - 0.04) : (baseThresh * 2.2);
+
+        if (normalizedTilt > thresh) steerCmd = 1;      // A (Trái)
+        else if (normalizedTilt < -threshR) steerCmd = -1; // D (Phải)
+    }
+
+    // 2. Nghiêng người (Lean)
+    if ((steerMode === 'lean' || steerMode === 'all') && steerCmd === 0) {
         const shoulderX = (leftShoulder.x + rightShoulder.x) / 2;
         const hipX = (leftHip && rightHip) ? (leftHip.x + rightHip.x) / 2 : shoulderX;
-        
         const leanDelta = shoulderX - hipX;
-        
+
         const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
         const thresh = isSteeringLeft ? (baseThresh - 0.02) : baseThresh;
         const threshR = isSteeringRight ? (baseThresh - 0.02) : baseThresh;
-        
-        if (leanDelta > thresh) steerCmd = 1; // 1 is LEFT.
-        else if (leanDelta < -threshR) steerCmd = -1; // -1 is RIGHT.
+
+        if (leanDelta > thresh) steerCmd = 1;
+        else if (leanDelta < -threshR) steerCmd = -1;
     }
-    
-    // B. Steering Wheel (Cầm Vô Lăng Tay / Chụm Tay)
-    if ((mode === 'wheel' || mode === 'all') && steerCmd === 0) {
-        if (leftWrist && rightWrist && leftShoulder && rightShoulder) {
-            if (leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
-                const dy = leftWrist.y - rightWrist.y;
-                const shoulderW = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y) || 0.3;
-                const normalizedTilt = dy / shoulderW; // positive = left hand lower (Left turn)
-                
-                const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
-                // We use baseThresh * 2.5 to match the sensitivity scale of the UI slider which was designed for angles
-                const thresh = isSteeringLeft ? (baseThresh * 2.5 - 0.05) : (baseThresh * 2.5);
-                const threshR = isSteeringRight ? (baseThresh * 2.5 - 0.05) : (baseThresh * 2.5);
-                
-                // Turning Physical LEFT: left hand goes DOWN (larger Y), right UP (smaller Y). dy > 0.
-                if (normalizedTilt > thresh) steerCmd = 1; // LEFT
-                else if (normalizedTilt < -threshR) steerCmd = -1; // RIGHT
-            }
-        }
-    }
-    
-    // C. Head Tilt (Nghiêng Đầu)
-    if ((mode === 'head' || mode === 'all') && steerCmd === 0) {
+
+    // 3. Nghiêng đầu (Head)
+    if ((steerMode === 'head' || steerMode === 'all') && steerCmd === 0) {
         const leftEar = pl[7];
         const rightEar = pl[8];
         if (leftEar && rightEar) {
-            // If tilting head LEFT, left ear goes DOWN (larger Y), right ear goes UP (smaller Y).
-            // So leftEar.y - rightEar.y is POSITIVE.
             const earDelta = leftEar.y - rightEar.y;
             const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
             const thresh = isSteeringLeft ? (baseThresh * 0.5 - 0.01) : (baseThresh * 0.5);
             const threshR = isSteeringRight ? (baseThresh * 0.5 - 0.01) : (baseThresh * 0.5);
-            
-            if (earDelta > thresh) steerCmd = 1; // LEFT
-            else if (earDelta < -threshR) steerCmd = -1; // RIGHT
+
+            if (earDelta > thresh) steerCmd = 1;
+            else if (earDelta < -threshR) steerCmd = -1;
         }
     }
 
@@ -498,35 +467,6 @@ function processGestures(pl) {
         triggerAction('left', false);
         triggerAction('right', false);
     }
-
-    // 3. VŨ KHÍ & NITRO (J / K)
-    // Thay vì nhận diện ngón tay (không ổn định), dùng các tư thế rõ ràng hơn:
-    // Nitro (K - punchR): Chập 2 tay vào nhau (Clap)
-    // Bắn (J - punchL): Giơ 1 tay lên cao ngang đầu/mũi
-    let isClapping = false;
-    let isHandRaised = false;
-
-    if (leftWrist && rightWrist && leftShoulder && rightShoulder && leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
-        const shoulderW = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y) || 0.3;
-        const wristDist = Math.hypot(leftWrist.x - rightWrist.x, leftWrist.y - rightWrist.y);
-        
-        // Chập 2 tay vào nhau (khoảng cách rất nhỏ)
-        if (wristDist / shoulderW < 0.35) {
-            isClapping = true;
-        }
-    }
-    
-    if (nose) {
-        // Giơ tay cao hơn mũi
-        if ((leftWrist && leftWrist.visibility > 0.5 && leftWrist.y < nose.y) || 
-            (rightWrist && rightWrist.visibility > 0.5 && rightWrist.y < nose.y)) {
-            isHandRaised = true;
-        }
-    }
-
-    // Gán hành động: K (punchR) = Nitro (Clap), J (punchL) = Fire (Raise Hand)
-    triggerAction('punchR', isClapping);
-    triggerAction('punchL', isHandRaised);
 }
 
 function triggerAction(actionName, isTriggered) {
