@@ -28,13 +28,13 @@ let ws = null;
 let isConnected = false;
 
 function connectWebSocket() {
-    connText.innerText = "Đang kết nối...";
+    connText.innerText = "Äang káº¿t ná»‘i...";
     ws = new WebSocket('ws://localhost:8765');
     
     ws.onopen = () => {
         isConnected = true;
         connStatus.classList.add('connected');
-        connText.innerText = "Đã Kết Nối Server";
+        connText.innerText = "ÄÃ£ Káº¿t Ná»‘i Server";
         setupModal.style.display = 'none';
         initCamera();
     };
@@ -42,7 +42,7 @@ function connectWebSocket() {
     ws.onclose = () => {
         isConnected = false;
         connStatus.classList.remove('connected');
-        connText.innerText = "Mất Kết Nối Server";
+        connText.innerText = "Máº¥t Káº¿t Ná»‘i Server";
         // Try reconnecting after 3 seconds
         setTimeout(connectWebSocket, 3000);
     };
@@ -369,7 +369,7 @@ function processGestures(pl) {
             else triggerAction('duck', false);
         }
     } else {
-        // Head Pitch (Ngửa / Cúi)
+        // Head Pitch (Ngá»­a / CÃºi)
         const nose = pl[0];
         const leftEar = pl[7];
         const rightEar = pl[8];
@@ -377,8 +377,8 @@ function processGestures(pl) {
             const earMidY = (leftEar.y + rightEar.y) / 2;
             const pitchDelta = nose.y - earMidY; 
             
-            // pitchDelta < 0 means Nose is HIGHER than Ears (Ngửa đầu) -> Ga (Jump)
-            // pitchDelta > 0 means Nose is LOWER than Ears (Cúi đầu) -> Phanh (Duck)
+            // pitchDelta < 0 means Nose is HIGHER than Ears (Ngá»­a Ä‘áº§u) -> Ga (Jump)
+            // pitchDelta > 0 means Nose is LOWER than Ears (CÃºi Ä‘áº§u) -> Phanh (Duck)
             
             const jumpThresh = isJumping ? -0.01 : -0.03;
             if (pitchDelta < jumpThresh) triggerAction('jump', true);
@@ -395,7 +395,7 @@ function processGestures(pl) {
     const modeEl = document.getElementById('steerMode');
     const mode = (modeEl && modeEl.style.display !== 'none') ? modeEl.value : 'lean';
     
-    // A. Lean (Nghiêng Người)
+    // A. Lean (NghiÃªng NgÆ°á»i)
     if (mode === 'lean' || mode === 'all') {
         const shoulderX = (leftShoulder.x + rightShoulder.x) / 2;
         const hipX = (leftHip && rightHip) ? (leftHip.x + rightHip.x) / 2 : shoulderX;
@@ -414,7 +414,7 @@ function processGestures(pl) {
         else if (leanDelta < -threshR) steerCmd = 1; // 1 is LEFT.
     }
     
-    // B. Steering Wheel (Cầm Vô Lăng Tay)
+    // B. Steering Wheel (Cáº§m VÃ´ LÄƒng Tay)
     if ((mode === 'wheel' || mode === 'all') && steerCmd === 0) {
         if (leftWrist && rightWrist && leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
             const handsMidY = (leftWrist.y + rightWrist.y) / 2;
@@ -440,7 +440,7 @@ function processGestures(pl) {
         }
     }
     
-    // C. Head Tilt (Nghiêng Đầu)
+    // C. Head Tilt (NghiÃªng Äáº§u)
     if ((mode === 'head' || mode === 'all') && steerCmd === 0) {
         const leftEar = pl[7];
         const rightEar = pl[8];
@@ -521,7 +521,7 @@ function startArcade(gameUrl) {
     // Switch HUD & Modals
     setupModal.style.display = 'none';
     connStatus.classList.add('connected');
-    connText.innerText = "Chế độ Arcade";
+    connText.innerText = "Cháº¿ Ä‘á»™ Arcade";
 
         // Contextual UI Configuration
     const mapJump = document.getElementById('map-jump');
@@ -581,6 +581,7 @@ function startArcade(gameUrl) {
 
     // In Arcade mode, we send KeyboardEvents directly to the iframe instead of WebSocket
     window.arcadeMode = true;
+    setTimeout(sendAvatarToGame, 500);
 }
 
 // Modify sendKey to support Arcade mode
@@ -676,3 +677,80 @@ window.addEventListener('message', (e) => {
 });
 
 
+
+// Avatar Logic
+const avatarUpload = document.getElementById('avatarUpload');
+const btnCaptureAvatar = document.getElementById('btnCaptureAvatar');
+const avatarPreview = document.getElementById('avatarPreview');
+const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+const enableAvatar = document.getElementById('enableAvatar');
+
+let currentAvatarData = localStorage.getItem('playerAvatar') || null;
+
+function updateAvatarUI() {
+    if (currentAvatarData) {
+        if (avatarPreview) {
+            avatarPreview.src = currentAvatarData;
+            avatarPreview.style.display = 'block';
+        }
+        if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
+    }
+    sendAvatarToGame();
+}
+if (currentAvatarData) setTimeout(updateAvatarUI, 100);
+
+if (avatarUpload) {
+    avatarUpload.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                currentAvatarData = ev.target.result;
+                localStorage.setItem('playerAvatar', currentAvatarData);
+                updateAvatarUI();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+if (btnCaptureAvatar) {
+    btnCaptureAvatar.addEventListener('click', () => {
+        const camVideo = document.getElementById('cameraVideo');
+        if (!camVideo || !camVideo.videoWidth) {
+            alert("Vui lòng d?i Camera b?t lên!");
+            return;
+        }
+        const c = document.createElement('canvas');
+        const size = Math.min(camVideo.videoWidth, camVideo.videoHeight);
+        c.width = 128;
+        c.height = 128;
+        const ctx = c.getContext('2d');
+        
+        ctx.translate(128, 0);
+        ctx.scale(-1, 1);
+        
+        const sx = (camVideo.videoWidth - size) / 2;
+        const sy = (camVideo.videoHeight - size) / 2;
+        
+        ctx.drawImage(camVideo, sx, sy, size, size, 0, 0, 128, 128);
+        currentAvatarData = c.toDataURL('image/jpeg', 0.8);
+        localStorage.setItem('playerAvatar', currentAvatarData);
+        updateAvatarUI();
+    });
+}
+
+if (enableAvatar) {
+    enableAvatar.addEventListener('change', sendAvatarToGame);
+}
+
+function sendAvatarToGame() {
+    const frame = document.getElementById('arcadeFrame');
+    if (frame && frame.contentWindow && window.arcadeMode) {
+        frame.contentWindow.postMessage({
+            type: 'setAvatar',
+            avatarData: currentAvatarData,
+            enabled: enableAvatar ? enableAvatar.checked : false
+        }, '*');
+    }
+}
