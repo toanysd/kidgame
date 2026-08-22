@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đánh Trống AI</title>
+    <style>
+        body { margin: 0; background: #fbbf24; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; overflow: hidden; }
+        .drums { display: flex; gap: 50px; margin-top: 50px; }
+        .drum { width: 200px; height: 200px; border-radius: 50%; background: #fff; border: 15px solid #ef4444; box-shadow: 0 10px 0 #b91c1c, inset 0 0 20px rgba(0,0,0,0.2); position: relative; transition: 0.1s; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: #ef4444; }
+        .drum.hit { transform: translateY(10px) scale(0.95); box-shadow: 0 0 0 #b91c1c, 0 0 50px #fff; background: #fef08a; }
+        #scoreBoard { font-size: 40px; font-weight: bold; color: #b91c1c; text-shadow: 2px 2px 0 #fff; }
+        .note { position: absolute; top: -300px; width: 60px; height: 60px; border-radius: 50%; background: #38bdf8; border: 5px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: top 0.05s linear; }
+    </style>
+</head>
+<body>
+    <div id="scoreBoard">NHỊP ĐIỆU: <span id="score">0</span></div>
+    
+    <div class="drums">
+        <div class="drum" id="drumL">Đấm Trái (J)</div>
+        <div class="drum" id="drumR">Đấm Phải (K)</div>
+    </div>
+
+    <script>
+        const drumL = document.getElementById('drumL');
+        const drumR = document.getElementById('drumR');
+        let score = 0;
+
+        function hitDrum(side) {
+            const el = side === 'L' ? drumL : drumR;
+            el.classList.add('hit');
+            setTimeout(() => el.classList.remove('hit'), 100);
+            
+            // Play Audio
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = side === 'L' ? 'square' : 'triangle';
+            osc.frequency.setValueAtTime(side === 'L' ? 150 : 200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+
+            // Add score
+            score += 10;
+            document.getElementById('score').innerText = score;
+        }
+
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if (k === 'j' || k === 'a' || k === 'arrowleft') hitDrum('L');
+            if (k === 'k' || k === 'd' || k === 'arrowright') hitDrum('R');
+        });
+    </script>
+</body>
+</html>

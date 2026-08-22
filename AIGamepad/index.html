@@ -84,8 +84,11 @@
             </div>
         </aside>
 
-        <!-- Camera Area -->
-        <main class="camera-area">
+        <!-- Camera Area & Game Frame -->
+        <main class="camera-area" id="mainArea">
+            <!-- Iframe for Web Games (Hidden by default) -->
+            <iframe id="arcadeFrame" style="display:none; width: 100%; height: 100%; border: none;"></iframe>
+            
             <video id="videoElement" playsinline autoplay muted style="display: none;"></video>
             <canvas id="gameCanvas"></canvas>
             
@@ -103,22 +106,32 @@
 
     <!-- Setup Modal -->
     <div class="modal" id="setupModal">
-        <div class="modal-content">
-            <h1>🚀 Bắt đầu điều khiển PC</h1>
-            <p>Để Web AI có thể bấm phím giả lập trên máy tính Windows, bạn cần chạy Python Server cục bộ.</p>
+        <div class="modal-content" style="max-width: 800px;">
+            <h1 style="font-size: 28px; margin-bottom: 30px;">🎮 Lựa Chọn Chế Độ Chơi</h1>
             
-            <div class="code-block">
-                # Mở Terminal / CMD tại thư mục dự án và chạy:
-                cd apps/kidgame/AIGamepad/server
-                pip install websockets pydirectinput
-                python server.py
+            <div style="display: flex; gap: 20px; text-align: left;">
+                <!-- Hướng 1: Chơi Web Game -->
+                <div style="flex: 1; background: #0f172a; padding: 25px; border-radius: 16px; border: 2px solid #38bdf8;">
+                    <h2 style="color: #38bdf8; margin-bottom: 10px;">🕹️ Chơi Game Trên Web (Arcade)</h2>
+                    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">Không cần tải bất cứ phần mềm nào. Chọn một trò chơi bên dưới và múa tay chơi ngay!</p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="btn-primary" style="background: #22c55e;" onclick="startArcade('games/racing.html')">🚗 Chơi Đua Xe (Dùng Nghiêng Người)</button>
+                        <button class="btn-primary" style="background: #ef4444;" onclick="startArcade('games/drum.html')">🥁 Chơi Đánh Trống (Dùng Đấm)</button>
+                    </div>
+                </div>
+
+                <!-- Hướng 2: Chơi PC Game -->
+                <div style="flex: 1; background: #0f172a; padding: 25px; border-radius: 16px; border: 2px solid #a78bfa;">
+                    <h2 style="color: #a78bfa; margin-bottom: 10px;">💻 Điều Khiển Game PC</h2>
+                    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 15px;">Tải file cài đặt nhỏ để biến Camera thành tay cầm chơi FIFA, Roblox, GTA trên máy tính.</p>
+                    
+                    <a href="server/dist/AIGamepad_Server.exe" download style="display: inline-block; background: #a78bfa; color: #0f172a; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-bottom: 15px;">📥 Tải AIGamepad.exe</a>
+                    
+                    <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Tải về -> Click mở -> Bấm Kết nối</p>
+                    <button class="btn-primary" style="background: transparent; border: 2px solid #a78bfa; color: #a78bfa; width: 100%;" id="btnConnect">🔗 Kết Nối PC Server</button>
+                </div>
             </div>
-            
-            <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">
-                Đảm bảo server báo "Đang lắng nghe kết nối tại: ws://localhost:8765" trước khi nhấn Tiếp tục.
-            </p>
-            
-            <button class="btn-primary" id="btnConnect">Kết Nối & Bật Camera</button>
         </div>
     </div>
 

@@ -368,4 +368,58 @@ function releaseAllGestures() {
 }
 
 // Start
-btnConnect.addEventListener('click', connectWebSocket);
+btnConnect.addEventListener('click', () => {
+    // Check if arcade frame is active
+    if (document.getElementById('arcadeFrame').style.display !== 'none') {
+        setupModal.style.display = 'none';
+        initCamera();
+    } else {
+        connectWebSocket();
+    }
+});
+
+function startArcade(gameUrl) {
+    const frame = document.getElementById('arcadeFrame');
+    frame.src = gameUrl;
+    frame.style.display = 'block';
+    
+    // Switch HUD & Modals
+    setupModal.style.display = 'none';
+    connStatus.classList.add('connected');
+    connText.innerText = "Chế độ Arcade";
+    
+    initCamera();
+
+    // In Arcade mode, we send KeyboardEvents directly to the iframe instead of WebSocket
+    window.arcadeMode = true;
+}
+
+// Modify sendKey to support Arcade mode
+const originalSendKey = sendKey;
+sendKey = function(action, keyChar) {
+    if (window.arcadeMode) {
+        // Send synthetic event to iframe
+        const frame = document.getElementById('arcadeFrame');
+        if (frame && frame.contentWindow) {
+            // Update HUD
+            if (action === 'keydown') {
+                if (activeKeys.has(keyChar)) return;
+                activeKeys.add(keyChar);
+            } else {
+                if (!activeKeys.has(keyChar)) return;
+                activeKeys.delete(keyChar);
+            }
+            updateHUD();
+
+            // Dispatch
+            const event = new KeyboardEvent(action, {
+                key: keyChar,
+                code: 'Key' + keyChar.toUpperCase(),
+                bubbles: true
+            });
+            frame.contentWindow.dispatchEvent(event);
+        }
+    } else {
+        originalSendKey(action, keyChar);
+    }
+};
