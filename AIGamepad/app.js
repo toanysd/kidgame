@@ -335,31 +335,44 @@ function processGestures(pl) {
     
     if (!leftShoulder || !rightShoulder) return;
 
-    // Auto-calibrate baseline shoulder Y position
-    const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-    if (GState.calibratingFrames < 30) {
-        GState.baselineY = (GState.baselineY * GState.calibratingFrames + shoulderY) / (GState.calibratingFrames + 1);
-        GState.calibratingFrames++;
-    } else {
-        // Slow adjustment to baseline (allow gradual drifting)
-        GState.baselineY = GState.baselineY * 0.99 + shoulderY * 0.01;
-    }
+    const leftAnkle = pl[27];
+    const rightAnkle = pl[28];
+
+    // Current State for Hysteresis
+    const isSteeringLeft = activeKeys.has('left');
+    const isSteeringRight = activeKeys.has('right');
+    const isJumping = activeKeys.has('jump');
+    const isDucking = activeKeys.has('duck');
 
     // 1. JUMP & DUCK
-    const yDelta = shoulderY - GState.baselineY;
-    if (yDelta < -0.06) {
-        triggerAction('jump', true);
-        triggerAction('duck', false);
-    } else if (yDelta > 0.08) {
-        triggerAction('duck', true);
-        triggerAction('jump', false);
-    } else {
-        triggerAction('jump', false);
-        triggerAction('duck', false);
+    const hipY = (leftHip && rightHip) ? (leftHip.y + rightHip.y) / 2 : null;
+    const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+    const ankleY = (leftAnkle && rightAnkle) ? (leftAnkle.y + rightAnkle.y) / 2 : null;
+
+    if (hipY && ankleY) {
+        const bodyHeight = ankleY - shoulderY;
+        const legLength = ankleY - hipY;
+        const ratio = legLength / bodyHeight;
+        
+        // Jump hysteresis
+        const jumpThresh = isJumping ? 0.65 : 0.72;
+        if (ratio > jumpThresh && ankleY < 0.8) {
+            triggerAction('jump', true);
+        } else {
+            triggerAction('jump', false);
+        }
+        
+        // Duck hysteresis
+        const duckThresh = isDucking ? 0.45 : 0.40;
+        if (ratio < duckThresh) {
+            triggerAction('duck', true);
+        } else {
+            triggerAction('duck', false);
+        }
     }
 
     // 2. LEAN LEFT & RIGHT (Steering Modes)
-    let steerVal = 0; // -1 (Right) to 1 (Left)
+    let steerCmd = 0; // -1 (Right) to 1 (Left)
     const modeEl = document.getElementById('steerMode');
     const mode = (modeEl && modeEl.style.display !== 'none') ? modeEl.value : 'lean';
     
@@ -368,39 +381,46 @@ function processGestures(pl) {
         const shoulderX = (leftShoulder.x + rightShoulder.x) / 2;
         const hipX = (leftHip && rightHip) ? (leftHip.x + rightHip.x) / 2 : shoulderX;
         const leanDelta = shoulderX - hipX;
-        if (leanDelta > 0.05) steerVal = 1;
-        else if (leanDelta < -0.05) steerVal = -1;
+        
+        const threshL = isSteeringLeft ? 0.05 : 0.08;
+        const threshR = isSteeringRight ? -0.05 : -0.08;
+        
+        if (leanDelta > threshL) steerCmd = 1;
+        else if (leanDelta < threshR) steerCmd = -1;
     }
     
     // B. Steering Wheel (Cầm Vô Lăng Tay)
-    if ((mode === 'wheel' || mode === 'all') && steerVal === 0) {
+    if ((mode === 'wheel' || mode === 'all') && steerCmd === 0) {
         if (leftWrist && rightWrist && leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
-            // Check if hands are raised (above hips/chest)
-            if (leftWrist.y < leftShoulder.y + 0.2 && rightWrist.y < rightShoulder.y + 0.2) {
-                // Determine steering by height difference of hands
+            if (leftWrist.y < leftShoulder.y + 0.15 && rightWrist.y < rightShoulder.y + 0.15) {
                 const heightDiff = rightWrist.y - leftWrist.y;
-                if (heightDiff > 0.12) steerVal = 1; // Left hand higher -> steering Left (mirrored)
-                else if (heightDiff < -0.12) steerVal = -1; // Right hand higher -> steering Right
+                const threshL = isSteeringLeft ? 0.08 : 0.15;
+                const threshR = isSteeringRight ? -0.08 : -0.15;
+                
+                if (heightDiff > threshL) steerCmd = 1;
+                else if (heightDiff < threshR) steerCmd = -1;
             }
         }
     }
     
     // C. Head Tilt (Nghiêng Đầu)
-    if ((mode === 'head' || mode === 'all') && steerVal === 0) {
+    if ((mode === 'head' || mode === 'all') && steerCmd === 0) {
         const leftEar = pl[7];
         const rightEar = pl[8];
         if (leftEar && rightEar) {
             const headAngle = Math.atan2(rightEar.y - leftEar.y, rightEar.x - leftEar.x);
-            // headAngle normal is ~0. If leaning left (mirrored), left ear is lower (higher Y), so angle > 0.1
-            if (headAngle > 0.15) steerVal = 1;
-            else if (headAngle < -0.15) steerVal = -1;
+            const threshL = isSteeringLeft ? 0.10 : 0.20;
+            const threshR = isSteeringRight ? -0.10 : -0.20;
+            
+            if (headAngle > threshL) steerCmd = 1;
+            else if (headAngle < threshR) steerCmd = -1;
         }
     }
 
-    if (steerVal === 1) {
+    if (steerCmd === 1) {
         triggerAction('left', true);
         triggerAction('right', false);
-    } else if (steerVal === -1) {
+    } else if (steerCmd === -1) {
         triggerAction('right', true);
         triggerAction('left', false);
     } else {
