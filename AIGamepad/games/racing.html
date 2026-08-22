@@ -14,7 +14,7 @@
     </style>
 </head>
 <body>
-    <div id="ui">ĐIỂM: <span id="score">0</span></div>
+    <div id="ui">ĐIỂM: <span id="score">0</span> <br><span style="font-size: 16px; color: #fbbf24;">Tốc độ: <span id="speedDisplay">1.0</span>x</span></div>
     <div id="gameOver">
         <h1 style="color: #f87171; margin-top:0;">💥 RẦM! ĐỤNG RỒI!</h1>
         <p style="font-size: 20px;">Điểm của bé: <span id="finalScore" style="color: #fbbf24; font-size: 24px; font-weight: bold;">0</span></p>
@@ -28,13 +28,13 @@
         canvas.width = 400;
         canvas.height = window.innerHeight;
 
-        let car = { x: 175, y: canvas.height - 120, width: 60, height: 100, speed: 7 };
+        let car = { x: 175, y: canvas.height - 250, width: 60, height: 100, speed: 7 };
         let obstacles = [];
         let score = 0;
         let gameActive = true;
         let speedMult = 1;
 
-        let keys = { a: false, d: false, arrowleft: false, arrowright: false };
+        let keys = { a: false, d: false, w: false, s: false, arrowleft: false, arrowright: false, arrowup: false, arrowdown: false };
 
         window.addEventListener('keydown', (e) => {
             const k = e.key.toLowerCase();
@@ -78,7 +78,7 @@
             let emoji = isCar ? ['🚓', '🚕', '🚙'][Math.floor(Math.random()*3)] : ['🚧', '🪨'][Math.floor(Math.random()*2)];
             
             obstacles.push({ x: x, y: -100, width: width, height: height, emoji: emoji, isCar: isCar });
-            setTimeout(spawnObstacle, 1000 + Math.random() * 1000 / speedMult);
+            setTimeout(spawnObstacle, 1000 + Math.random() * 1000 / Math.max(speedMult, 0.5));
         }
 
         function drawEmoji(emoji, x, y, size) {
@@ -116,6 +116,15 @@
                 drawEmoji('🌲', 5, (i + Date.now()*0.5*speedMult) % canvas.height, 30);
                 drawEmoji('🌲', canvas.width - 35, (i + Date.now()*0.5*speedMult) % canvas.height, 30);
             }
+
+            // Adjust speed with Up/Down
+            if (keys.w || keys.arrowup) speedMult += 0.05;
+            if (keys.s || keys.arrowdown) speedMult -= 0.05;
+            // Clamp speed (min 0.5, max 4.0)
+            if (speedMult < 0.5) speedMult = 0.5;
+            if (speedMult > 4.0) speedMult = 4.0;
+            
+            document.getElementById('speedDisplay').innerText = speedMult.toFixed(1);
 
             // Move player car
             if (keys.a || keys.arrowleft) car.x -= car.speed;
