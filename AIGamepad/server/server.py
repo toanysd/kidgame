@@ -1,12 +1,14 @@
-import asyncio
+﻿import asyncio
 import json
 import logging
+import sys
 
 try:
     import websockets
 except ImportError:
-    print("Lỗi: Thiếu thư viện websockets. Vui lòng chạy lệnh: pip install websockets")
-    exit(1)
+    print("Lỗi: Thiếu thư viện websockets.")
+    input("Nhấn Enter để thoát...")
+    sys.exit(1)
 
 try:
     import pydirectinput as kbd
@@ -18,15 +20,15 @@ except ImportError:
         print("Sử dụng PyAutoGUI (Dành cho web game và giả lập cơ bản)")
         kbd.FAILSAFE = False
     except ImportError:
-        print("Lỗi: Thiếu thư viện điều khiển. Vui lòng chạy lệnh: pip install pydirectinput pyautogui")
-        exit(1)
+        print("Lỗi: Thiếu thư viện điều khiển (pydirectinput / pyautogui).")
+        input("Nhấn Enter để thoát...")
+        sys.exit(1)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
-# Set storing currently pressed keys to avoid spamming keydown
 pressed_keys = set()
 
-async def handle_client(websocket, path):
+async def handler(websocket):
     logging.info(f"Đã kết nối với Web AI Gamepad: {websocket.remote_address}")
     try:
         async for message in websocket:
@@ -40,7 +42,6 @@ async def handle_client(websocket, path):
                     
                 key = str(key).lower()
                 
-                # Ánh xạ một số phím đặc biệt
                 key_map = {
                     "space": "space",
                     "up": "up",
@@ -72,7 +73,6 @@ async def handle_client(websocket, path):
     except websockets.exceptions.ConnectionClosed:
         logging.info("Mất kết nối với AI Gamepad.")
     finally:
-        # Nhả toàn bộ phím khi mất kết nối để tránh kẹt phím
         for k in list(pressed_keys):
             try:
                 kbd.keyUp(k)
@@ -81,14 +81,27 @@ async def handle_client(websocket, path):
         pressed_keys.clear()
 
 async def main():
-    # Khởi động WebSocket server ở cổng 8765
-    server = await websockets.serve(handle_client, "localhost", 8765)
-    logging.info("=========================================")
-    logging.info("🚀 AI GAMEPAD SERVER ĐANG CHẠY 🚀")
-    logging.info("Đang lắng nghe kết nối tại: ws://localhost:8765")
-    logging.info("Vui lòng mở web AI Gamepad để bắt đầu điều khiển.")
-    logging.info("=========================================")
-    await server.wait_closed()
+    print("==================================================")
+    print("🚀 AI GAMEPAD SERVER ĐANG CHẠY")
+    print("==================================================")
+    print("Đang lắng nghe kết nối từ Web AI Gamepad (Port 8765)...")
+    print("Hãy giữ nguyên cửa sổ này trong lúc chơi game!")
+    print("Nhấn Ctrl + C để thoát.")
+    print("--------------------------------------------------")
+    
+    try:
+        async with websockets.serve(handler, "localhost", 8765):
+            await asyncio.Future()  # run forever
+    except OSError as e:
+        print(f"\n❌ LỖI: Không thể mở cổng 8765. Có thể một Server khác đang chạy.")
+        print(f"Chi tiết lỗi: {e}")
+        input("\nNhấn Enter để thoát...")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nĐã đóng Server.")
+    except Exception as e:
+        print(f"\nĐã xảy ra lỗi hệ thống: {e}")
+        input("\nNhấn Enter để thoát...")
