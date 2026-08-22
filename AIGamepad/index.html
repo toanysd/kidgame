@@ -99,6 +99,24 @@
                     <div class="hud-keys" id="hudKeys">
                         <!-- Keys inject here -->
                     </div>
+                    <button id="toggleVCBtn" style="margin-left: 15px; padding: 5px 10px; background: #475569; color: white; border: none; border-radius: 8px; cursor: pointer;">🎮 Nút Ảo</button>
+                </div>
+            </div>
+
+            <!-- Virtual Controller -->
+            <div class="virtual-controller" id="virtualController">
+                <div class="vc-dpad">
+                    <div class="vc-btn" onmousedown="vBtn('jump', true)" onmouseup="vBtn('jump', false)" onmouseleave="vBtn('jump', false)" ontouchstart="vBtn('jump', true)" ontouchend="vBtn('jump', false)">W</div>
+                    <div class="vc-row">
+                        <div class="vc-btn" onmousedown="vBtn('left', true)" onmouseup="vBtn('left', false)" onmouseleave="vBtn('left', false)" ontouchstart="vBtn('left', true)" ontouchend="vBtn('left', false)">A</div>
+                        <div class="vc-btn" onmousedown="vBtn('duck', true)" onmouseup="vBtn('duck', false)" onmouseleave="vBtn('duck', false)" ontouchstart="vBtn('duck', true)" ontouchend="vBtn('duck', false)">S</div>
+                        <div class="vc-btn" onmousedown="vBtn('right', true)" onmouseup="vBtn('right', false)" onmouseleave="vBtn('right', false)" ontouchstart="vBtn('right', true)" ontouchend="vBtn('right', false)">D</div>
+                    </div>
+                </div>
+                <div class="vc-actions">
+                    <div class="vc-btn vc-btn-wide" onmousedown="vBtn('space', true)" onmouseup="vBtn('space', false)" onmouseleave="vBtn('space', false)" ontouchstart="vBtn('space', true)" ontouchend="vBtn('space', false)">SPACE</div>
+                    <div class="vc-btn" onmousedown="vBtn('punchL', true)" onmouseup="vBtn('punchL', false)" onmouseleave="vBtn('punchL', false)" ontouchstart="vBtn('punchL', true)" ontouchend="vBtn('punchL', false)">J</div>
+                    <div class="vc-btn" onmousedown="vBtn('punchR', true)" onmouseup="vBtn('punchR', false)" onmouseleave="vBtn('punchR', false)" ontouchstart="vBtn('punchR', true)" ontouchend="vBtn('punchR', false)">K</div>
                 </div>
             </div>
         </main>

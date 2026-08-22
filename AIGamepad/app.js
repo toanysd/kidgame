@@ -423,3 +423,48 @@ sendKey = function(action, keyChar) {
         originalSendKey(action, keyChar);
     }
 };
+
+// Forward physical keyboard keys to iframe if in arcade mode
+window.addEventListener('keydown', (e) => {
+    if (!activeInput && window.arcadeMode) {
+        let key = e.key.toLowerCase();
+        if (key === ' ') key = 'space';
+        sendKey('keydown', key);
+    }
+});
+window.addEventListener('keyup', (e) => {
+    if (!activeInput && window.arcadeMode) {
+        let key = e.key.toLowerCase();
+        if (key === ' ') key = 'space';
+        sendKey('keyup', key);
+    }
+});
+
+// Virtual Controller Buttons
+window.vBtn = function(actionName, isPressed) {
+    if (window.event) window.event.preventDefault();
+    let keyChar = actionName === 'space' ? 'space' : mapping[actionName];
+    if (!keyChar) keyChar = actionName; // fallback
+
+    const el = window.event && window.event.target ? window.event.target : null;
+    if (isPressed) {
+        sendKey('keydown', keyChar);
+        if (el) el.classList.add('pressed');
+    } else {
+        sendKey('keyup', keyChar);
+        if (el) el.classList.remove('pressed');
+    }
+};
+
+const toggleVCBtn = document.getElementById('toggleVCBtn');
+const virtualController = document.getElementById('virtualController');
+if (toggleVCBtn) {
+    toggleVCBtn.addEventListener('click', () => {
+        if (virtualController.style.display === 'flex') {
+            virtualController.style.display = 'none';
+        } else {
+            virtualController.style.display = 'flex';
+        }
+    });
+}
+
