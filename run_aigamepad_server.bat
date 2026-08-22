@@ -13,10 +13,10 @@ echo [2/3] Cai dat thu vien can thiet (websockets, pydirectinput, pyautogui)...
 python -m pip install websockets pydirectinput pyautogui >nul 2>&1
 
 echo [3/3] Tai ma nguon Server moi nhat va khoi chay...
-curl -s -L -o "%TEMP%\aigamepad_server.py" https://raw.githubusercontent.com/toanysd/kidgame/main/AIGamepad/server/server.py
+curl -s -L -o "%TEMP%\aigamepad_server.py" "https://raw.githubusercontent.com/toanysd/kidgame/main/AIGamepad/server/server.py?v=%random%%time:~6,2%"
 
 if not exist "%TEMP%\aigamepad_server.py" (
-    powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/toanysd/kidgame/main/AIGamepad/server/server.py' -OutFile '%TEMP%\aigamepad_server.py'"
+    powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/toanysd/kidgame/main/AIGamepad/server/server.py?v=%random%' -OutFile '%TEMP%\aigamepad_server.py'"
 )
 
 cls
