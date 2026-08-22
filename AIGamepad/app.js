@@ -405,13 +405,12 @@ function processGestures(pl) {
         // User reported it's reversed, meaning our previous mapping made them go Right. Let's flip it properly!
         const leanDelta = shoulderX - hipX;
         
-        const thresh = isSteeringLeft ? 0.05 : 0.08;
-        const threshR = isSteeringRight ? 0.05 : 0.08;
+        const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
+        const thresh = isSteeringLeft ? (baseThresh - 0.02) : baseThresh;
+        const threshR = isSteeringRight ? (baseThresh - 0.02) : baseThresh;
         
-        // FIX: leanDelta > 0 means leaning to Physical Left. We should steer LEFT (1).
-        // Wait, if it was going right before, we just flip it:
-        if (leanDelta > thresh) steerCmd = -1; // -1 is RIGHT. If user said it was reversed, we swap 1 and -1.
-        else if (leanDelta < -threshR) steerCmd = 1; // 1 is LEFT.
+        if (leanDelta > thresh) steerCmd = 1; // 1 is LEFT.
+        else if (leanDelta < -threshR) steerCmd = -1; // -1 is RIGHT.
     }
     
     // B. Steering Wheel (Cáº§m VÃ´ LÄƒng Tay)
@@ -428,9 +427,9 @@ function processGestures(pl) {
                 // Ensure hands are held apart to form a wheel
                 if (Math.abs(dx) > 0.05) {
                     const wheelAngle = Math.atan2(dy, dx); // Angle in radians
-                    
-                    const thresh = isSteeringLeft ? 0.12 : 0.22; // ~12 degrees
-                    const threshR = isSteeringRight ? 0.12 : 0.22;
+                    const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
+                    const thresh = isSteeringLeft ? (baseThresh * 2.5 - 0.05) : (baseThresh * 2.5);
+                    const threshR = isSteeringRight ? (baseThresh * 2.5 - 0.05) : (baseThresh * 2.5);
                     
                     // Turning Physical LEFT: left hand goes DOWN (larger Y), right UP (smaller Y). dy > 0. wheelAngle > 0.
                     if (wheelAngle > thresh) steerCmd = 1; // LEFT
@@ -448,9 +447,9 @@ function processGestures(pl) {
             // If tilting head LEFT, left ear goes DOWN (larger Y), right ear goes UP (smaller Y).
             // So leftEar.y - rightEar.y is POSITIVE.
             const earDelta = leftEar.y - rightEar.y;
-            
-            const thresh = isSteeringLeft ? 0.03 : 0.05;
-            const threshR = isSteeringRight ? 0.03 : 0.05;
+            const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
+            const thresh = isSteeringLeft ? (baseThresh * 0.5 - 0.01) : (baseThresh * 0.5);
+            const threshR = isSteeringRight ? (baseThresh * 0.5 - 0.01) : (baseThresh * 0.5);
             
             if (earDelta > thresh) steerCmd = 1; // LEFT
             else if (earDelta < -threshR) steerCmd = -1; // RIGHT

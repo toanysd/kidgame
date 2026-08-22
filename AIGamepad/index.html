@@ -72,6 +72,20 @@
                     <option value="body">Nhảy / Ngồi (Thể dục)</option>
                 </select>
 
+                <label style="font-size: 14px; font-weight: bold; color: #38bdf8; display: block; margin-top: 15px;">Độ nhạy Bẻ Lái:</label>
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                    <span style="color: #94a3b8; font-size: 12px;">Nhạy</span>
+                    <input type="range" id="steerSensSlider" min="0.01" max="0.30" step="0.01" value="0.08" style="flex: 1;">
+                    <span style="color: #94a3b8; font-size: 12px;">Trì hoãn</span>
+                </div>
+
+                <label style="font-size: 14px; font-weight: bold; color: #38bdf8; display: block; margin-top: 15px;">Độ nhạy Cúi/Ngẩng (Ga/Phanh):</label>
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                    <span style="color: #94a3b8; font-size: 12px;">Nhạy</span>
+                    <input type="range" id="pitchSensSlider" min="0.02" max="0.25" step="0.01" value="0.10" style="flex: 1;">
+                    <span style="color: #94a3b8; font-size: 12px;">Trì hoãn</span>
+                </div>
+
                 <label style="font-size: 14px; font-weight: bold; color: #38bdf8; display: block; margin-top: 15px;">Thanh tốc độ đua:</label>
                 <input type="range" id="speedSlider" min="0.5" max="4.0" step="0.1" value="1.0" style="width: 100%; margin-top: 8px;">
             </div>
