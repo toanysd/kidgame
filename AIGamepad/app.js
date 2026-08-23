@@ -97,6 +97,7 @@ function updateHUD() {
 }
 
 // =========================================================
+// =========================================================
 // KEY MAPPING LOGIC
 // =========================================================
 const mapping = {
@@ -108,19 +109,29 @@ const mapping = {
     punchR: 'k'
 };
 
+// Load saved mapping from localStorage if exists
+try {
+    const saved = localStorage.getItem('aigamepad_custom_keys');
+    if (saved) {
+        Object.assign(mapping, JSON.parse(saved));
+    }
+} catch (e) {}
+
 const inputs = document.querySelectorAll('.key-input');
 let activeInput = null;
 
 inputs.forEach(input => {
-    // Load initial mapping from HTML
+    // Load initial mapping
     const id = input.id.replace('key-', '');
-    if (mapping[id] !== undefined) mapping[id] = input.value;
+    if (mapping[id] !== undefined) {
+        input.value = mapping[id];
+    }
 
     input.addEventListener('click', (e) => {
         if (activeInput) activeInput.classList.remove('recording');
         activeInput = input;
         input.classList.add('recording');
-        input.value = '?';
+        input.value = 'Bấm phím...';
     });
 });
 
@@ -138,6 +149,10 @@ window.addEventListener('keydown', (e) => {
         mapping[id] = key;
         activeInput = null;
         
+        try {
+            localStorage.setItem('aigamepad_custom_keys', JSON.stringify(mapping));
+        } catch (err) {}
+
         const presetEl = document.getElementById('gamePreset');
         if (presetEl) presetEl.value = 'custom';
     }
@@ -147,13 +162,24 @@ const gamePreset = document.getElementById('gamePreset');
 if (gamePreset) {
     gamePreset.addEventListener('change', (e) => {
         const val = e.target.value;
-        if (val === 'roadrash') {
+        if (val === 'roadrash_punch') {
+            // Ga Up, Phanh Down, Trái Left, Phải Right, Đấm Space (Backhand), Đá Enter (Kick)
             setKeyMapping({
                 jump: 'up',
                 duck: 'down',
                 left: 'left',
                 right: 'right',
                 punchL: 'space',
+                punchR: 'enter'
+            });
+        } else if (val === 'roadrash_swing') {
+            // Ga Up, Phanh Down, Trái Left, Phải Right, Vung gậy Insert (Swing), Tăng tốc N (Nitro)
+            setKeyMapping({
+                jump: 'up',
+                duck: 'down',
+                left: 'left',
+                right: 'right',
+                punchL: 'insert',
                 punchR: 'n'
             });
         } else if (val === 'supertuxkart') {
@@ -184,6 +210,9 @@ function setKeyMapping(newMap) {
         const el = document.getElementById('key-' + k);
         if (el) el.value = newMap[k];
     }
+    try {
+        localStorage.setItem('aigamepad_custom_keys', JSON.stringify(mapping));
+    } catch (err) {}
 }
 
 // =========================================================

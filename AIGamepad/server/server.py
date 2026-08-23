@@ -55,7 +55,20 @@ async def handler(websocket):
                     "left": "left",
                     "right": "right",
                     "enter": "enter",
-                    "shift": "shift"
+                    "return": "enter",
+                    "shift": "shift",
+                    "ctrl": "ctrl",
+                    "alt": "alt",
+                    "insert": "insert",
+                    "delete": "delete",
+                    "home": "home",
+                    "end": "end",
+                    "pageup": "pageup",
+                    "pagedown": "pagedown",
+                    "tab": "tab",
+                    "esc": "escape",
+                    "escape": "escape",
+                    "backspace": "backspace"
                 }
                 
                 mapped_key = key_map.get(key, key)
