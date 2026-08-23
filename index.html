@@ -7,8 +7,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>KidGame Arcade - Select Your Game</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -736,45 +737,46 @@
 
         function initHubWebRTC(stream) {
             if (typeof Peer === 'undefined') return;
-            hubPeer = new Peer(); // Random ID
+            try {
+                hubPeer = new Peer(); // Random ID
 
-            hubPeer.on('open', (id) => {
-                console.log('Hub Peer ready:', id);
-                tryConnectToMonitor(stream);
-            });
-
-            hubPeer.on('error', (err) => {
-                console.error('Hub PeerJS error:', err);
-            });
-
-            // Periodically try to connect if disconnected
-            setInterval(() => {
-                if (!hubCall || !hubCall.open) {
+                hubPeer.on('open', (id) => {
+                    console.log('Hub Peer ready:', id);
                     tryConnectToMonitor(stream);
-                }
-            }, 5000);
+                });
+
+                hubPeer.on('error', (err) => {
+                    // Bỏ qua lỗi peer-unavailable khi thiết bị phụ huynh (Monitor) chưa mở
+                    if (err.type === 'peer-unavailable' || (err.message && err.message.includes('Could not connect to peer'))) {
+                        return;
+                    }
+                    console.warn('Hub PeerJS info:', err.type || err);
+                });
+
+                // Kiểm tra kết nối định kỳ mỗi 30s
+                setInterval(() => {
+                    if (!hubCall || !hubCall.open) {
+                        tryConnectToMonitor(stream);
+                    }
+                }, 30000);
+            } catch(e) {}
         }
 
         function tryConnectToMonitor(stream) {
-            if (!hubPeer || hubPeer.disconnected || !stream) return;
+            if (!hubPeer || hubPeer.disconnected || hubPeer.destroyed || !stream) return;
             try {
                 if (stream.getTracks().length === 0) return;
                 const call = hubPeer.call('kidgame-monitor-master', stream);
                 if (call) {
-                    console.log("Hub calling monitor...");
                     hubCall = call;
-                    call.on('error', (err) => {
-                        console.error("Call error:", err);
+                    call.on('error', () => {
                         hubCall = null;
                     });
                     call.on('close', () => {
-                        console.log("Call closed");
                         hubCall = null;
                     });
                 }
-            } catch(e) {
-                console.error("tryConnectToMonitor Error: ", e);
-            }
+            } catch(e) {}
         }
 
         async function preWarmCamera() {
