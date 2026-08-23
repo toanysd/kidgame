@@ -165,24 +165,24 @@ if (gamePreset) {
     gamePreset.addEventListener('change', (e) => {
         const val = e.target.value;
         if (val === 'roadrash_punch') {
-            // Ga Up, Phanh Down, Trái Left, Phải Right, Đấm Space (Backhand), Đá Enter (Kick)
+            // Ga Up, Phanh Down, Trái Left, Phải Right, Đấm tay phải Space (Backhand), Đá tay trái Enter (Kick)
             setKeyMapping({
                 jump: 'up',
                 duck: 'down',
                 left: 'left',
                 right: 'right',
-                punchL: 'space',
-                punchR: 'enter'
+                punchL: 'enter',
+                punchR: 'space'
             });
         } else if (val === 'roadrash_swing') {
-            // Ga Up, Phanh Down, Trái Left, Phải Right, Vung gậy Insert (Swing), Tăng tốc N (Nitro)
+            // Ga Up, Phanh Down, Trái Left, Phải Right, Vung gậy tay phải Insert (Swing), Tăng tốc tay trái N (Nitro)
             setKeyMapping({
                 jump: 'up',
                 duck: 'down',
                 left: 'left',
                 right: 'right',
-                punchL: 'insert',
-                punchR: 'n'
+                punchL: 'n',
+                punchR: 'insert'
             });
         } else if (val === 'supertuxkart') {
             setKeyMapping({
@@ -190,8 +190,8 @@ if (gamePreset) {
                 duck: 's',
                 left: 'a',
                 right: 'd',
-                punchL: 'j',
-                punchR: 'k'
+                punchL: 'k',
+                punchR: 'j'
             });
         } else if (val === 'roblox') {
             setKeyMapping({
@@ -199,8 +199,8 @@ if (gamePreset) {
                 duck: 's',
                 left: 'a',
                 right: 'd',
-                punchL: 'space',
-                punchR: 'e'
+                punchL: 'e',
+                punchR: 'space'
             });
         } else if (val === 'arcade_racing') {
             setKeyMapping({
@@ -208,8 +208,8 @@ if (gamePreset) {
                 duck: 'down',
                 left: 'left',
                 right: 'right',
-                punchL: 'space',
-                punchR: 'enter'
+                punchL: 'enter',
+                punchR: 'space'
             });
         } else if (val === 'arcade_claw' || val === 'arcade_tetris') {
             setKeyMapping({
@@ -217,8 +217,8 @@ if (gamePreset) {
                 duck: 's',
                 left: 'a',
                 right: 'd',
-                punchL: 'space',
-                punchR: 'enter'
+                punchL: 'enter',
+                punchR: 'space'
             });
         }
     });
@@ -634,7 +634,7 @@ function startArcade(gameUrl) {
 
     if (gameUrl.includes('racing.html')) {
         if (gamePresetSelect) gamePresetSelect.value = 'arcade_racing';
-        setKeyMapping({ jump: 'up', duck: 'down', left: 'left', right: 'right', punchL: 'space', punchR: 'enter' });
+        setKeyMapping({ jump: 'up', duck: 'down', left: 'left', right: 'right', punchL: 'enter', punchR: 'space' });
         if (steerConfig) steerConfig.style.display = 'flex';
         if (mapJump) mapJump.style.display = 'flex';
         if (mapDuck) mapDuck.style.display = 'flex';
@@ -644,7 +644,7 @@ function startArcade(gameUrl) {
         if (mapPunchR) mapPunchR.style.display = 'none';
     } else if (gameUrl.includes('claw.html')) {
         if (gamePresetSelect) gamePresetSelect.value = 'arcade_claw';
-        setKeyMapping({ jump: 'w', duck: 's', left: 'a', right: 'd', punchL: 'space', punchR: 'enter' });
+        setKeyMapping({ jump: 'w', duck: 's', left: 'a', right: 'd', punchL: 'enter', punchR: 'space' });
         if (steerConfig) steerConfig.style.display = 'none';
         if (mapJump) mapJump.style.display = 'flex';
         if (mapDuck) mapDuck.style.display = 'flex';
@@ -654,7 +654,7 @@ function startArcade(gameUrl) {
         if (mapPunchR) mapPunchR.style.display = 'flex';
     } else if (gameUrl.includes('tetris.html')) {
         if (gamePresetSelect) gamePresetSelect.value = 'arcade_tetris';
-        setKeyMapping({ jump: 'w', duck: 's', left: 'a', right: 'd', punchL: 'space', punchR: 'enter' });
+        setKeyMapping({ jump: 'w', duck: 's', left: 'a', right: 'd', punchL: 'enter', punchR: 'space' });
         if (steerConfig) steerConfig.style.display = 'none';
         if (mapJump) mapJump.style.display = 'flex';
         if (mapDuck) mapDuck.style.display = 'flex';
