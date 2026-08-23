@@ -821,8 +821,8 @@
 
             // Create new iframe
             const iframe = document.createElement('iframe');
-            iframe.allow = "camera *; microphone *; autoplay *; fullscreen *";
-            iframe.setAttribute('allow', 'camera *; microphone *; autoplay *; fullscreen *');
+            iframe.allow = "camera; microphone; autoplay; fullscreen";
+            iframe.setAttribute('allow', 'camera; microphone; autoplay; fullscreen');
             iframe.setAttribute('playsinline', '');
             iframe.setAttribute('webkit-playsinline', '');
             gameContainer.appendChild(iframe);
