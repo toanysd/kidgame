@@ -581,13 +581,14 @@ function startArcade(gameUrl) {
     const frame = document.getElementById('arcadeFrame');
     frame.src = gameUrl;
     frame.style.display = 'block';
+    document.body.classList.add('arcade-mode');
     
     // Switch HUD & Modals
     setupModal.style.display = 'none';
     connStatus.classList.add('connected');
-    connText.innerText = "Cháº¿ Ä‘á»™ Arcade";
+    connText.innerText = "Chế độ Arcade";
 
-        // Contextual UI Configuration
+    // Contextual UI Configuration
     const mapJump = document.getElementById('map-jump');
     const mapDuck = document.getElementById('map-duck');
     const mapLeft = document.getElementById('map-left');
@@ -597,41 +598,47 @@ function startArcade(gameUrl) {
     const steerConfig = document.getElementById('steeringConfig');
 
     if (gameUrl.includes('racing.html')) {
-        steerConfig.style.display = 'block';
-        mapJump.style.display = 'flex';
-        mapDuck.style.display = 'flex';
-        mapLeft.style.display = 'flex';
-        mapRight.style.display = 'flex';
-        mapPunchL.style.display = 'none';
-        mapPunchR.style.display = 'none';
+        if (steerConfig) steerConfig.style.display = 'flex';
+        if (mapJump) mapJump.style.display = 'flex';
+        if (mapDuck) mapDuck.style.display = 'flex';
+        if (mapLeft) mapLeft.style.display = 'flex';
+        if (mapRight) mapRight.style.display = 'flex';
+        if (mapPunchL) mapPunchL.style.display = 'none';
+        if (mapPunchR) mapPunchR.style.display = 'none';
     } else if (gameUrl.includes('claw.html')) {
-        steerConfig.style.display = 'none';
-        mapJump.style.display = 'flex';
-        mapDuck.style.display = 'none';
-        mapLeft.style.display = 'flex';
-        mapRight.style.display = 'flex';
-        mapPunchL.style.display = 'flex';
-        mapPunchR.style.display = 'none';
+        if (steerConfig) steerConfig.style.display = 'none';
+        if (mapJump) mapJump.style.display = 'flex';
+        if (mapDuck) mapDuck.style.display = 'flex';
+        if (mapLeft) mapLeft.style.display = 'flex';
+        if (mapRight) mapRight.style.display = 'flex';
+        if (mapPunchL) mapPunchL.style.display = 'flex';
+        if (mapPunchR) mapPunchR.style.display = 'flex';
+    } else if (gameUrl.includes('tetris.html')) {
+        if (steerConfig) steerConfig.style.display = 'none';
+        if (mapJump) mapJump.style.display = 'flex';
+        if (mapDuck) mapDuck.style.display = 'flex';
+        if (mapLeft) mapLeft.style.display = 'flex';
+        if (mapRight) mapRight.style.display = 'flex';
+        if (mapPunchL) mapPunchL.style.display = 'flex';
+        if (mapPunchR) mapPunchR.style.display = 'flex';
     } else if (gameUrl.includes('drum.html')) {
-        steerConfig.style.display = 'none';
-        mapJump.style.display = 'none';
-        mapDuck.style.display = 'none';
-        mapLeft.style.display = 'none';
-        mapRight.style.display = 'none';
-        mapPunchL.style.display = 'flex';
-        mapPunchR.style.display = 'flex';
+        if (steerConfig) steerConfig.style.display = 'none';
+        if (mapJump) mapJump.style.display = 'none';
+        if (mapDuck) mapDuck.style.display = 'none';
+        if (mapLeft) mapLeft.style.display = 'none';
+        if (mapRight) mapRight.style.display = 'none';
+        if (mapPunchL) mapPunchL.style.display = 'flex';
+        if (mapPunchR) mapPunchR.style.display = 'flex';
     } else {
-        // default
-        steerConfig.style.display = 'none';
-        mapJump.style.display = 'flex';
-        mapDuck.style.display = 'flex';
-        mapLeft.style.display = 'flex';
-        mapRight.style.display = 'flex';
-        mapPunchL.style.display = 'flex';
-        mapPunchR.style.display = 'flex';
+        if (steerConfig) steerConfig.style.display = 'none';
+        if (mapJump) mapJump.style.display = 'flex';
+        if (mapDuck) mapDuck.style.display = 'flex';
+        if (mapLeft) mapLeft.style.display = 'flex';
+        if (mapRight) mapRight.style.display = 'flex';
+        if (mapPunchL) mapPunchL.style.display = 'flex';
+        if (mapPunchR) mapPunchR.style.display = 'flex';
     }
 
-    
     initCamera();
 
     // In Arcade mode, we send KeyboardEvents directly to the iframe instead of WebSocket
