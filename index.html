@@ -834,12 +834,18 @@
 
             // Create new iframe
             const iframe = document.createElement('iframe');
+            iframe.id = 'frame_' + url;
+            iframe.src = url + bustSuffix;
             iframe.allow = "camera; microphone; autoplay; fullscreen";
             iframe.setAttribute('allow', 'camera; microphone; autoplay; fullscreen');
             iframe.setAttribute('playsinline', '');
             iframe.setAttribute('webkit-playsinline', '');
             gameContainer.appendChild(iframe);
             activeIframe = iframe;
+            
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
         }
 
         function closeGame() {
