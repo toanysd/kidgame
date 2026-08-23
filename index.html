@@ -779,8 +779,10 @@
             } catch(e) {}
         }
 
+        let isWarming = false;
         async function preWarmCamera() {
-            if (window.location.protocol !== 'file:') {
+            if (window.location.protocol !== 'file:' && !isWarming) {
+                isWarming = true;
                 try {
                     window.globalCameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                     console.log("Camera pre-warmed successfully!");
@@ -788,6 +790,7 @@
                 } catch (err) {
                     console.log("Camera pre-warm failed or denied:", err);
                 }
+                isWarming = false;
             }
         }
         
@@ -802,12 +805,22 @@
         const closeBtn = document.getElementById('closeGameBtn');
         let activeIframe = null;
 
-        function openGame(url) {
+        async function openGame(url) {
             // Nếu người dùng chạy trực tiếp bằng file:/// (nháy đúp), Iframe sẽ bị lỗi Camera.
             // Do đó tự động lùi về phương pháp chuyển trang cũ (sẽ bị hỏi quyền nhiều lần).
             if (window.location.protocol === 'file:') {
                 window.location.href = url;
                 return;
+            }
+
+            // Đảm bảo Camera đã bật xong ở parent trước khi nạp iframe để tránh xung đột iOS
+            if (!window.globalCameraStream && !isWarming) {
+                await preWarmCamera();
+            } else if (isWarming) {
+                // Wait until warming is done
+                while (isWarming) {
+                    await new Promise(r => setTimeout(r, 100));
+                }
             }
 
             gameContainer.style.display = 'block';
