@@ -187,7 +187,7 @@
             <!-- Iframe for Web Games (Hidden by default) -->
             <iframe id="arcadeFrame" style="display:none; width: 100%; height: 100%; border: none;"></iframe>
             
-            <video id="videoElement" playsinline autoplay muted style="display: none;"></video>
+            <video id="videoElement" playsinline webkit-playsinline autoplay muted style="position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; z-index: -999;"></video>
             <canvas id="gameCanvas"></canvas>
             
             <!-- HUD -->

@@ -30,9 +30,12 @@ const videoElement = document.createElement('video');
 videoElement.width = WIDTH;
 videoElement.height = HEIGHT;
 videoElement.setAttribute('playsinline', '');
+videoElement.setAttribute('webkit-playsinline', '');
 videoElement.setAttribute('autoplay', '');
+videoElement.setAttribute('muted', '');
 videoElement.muted = true;
-videoElement.style.display = 'none';
+videoElement.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-999;';
+document.body.appendChild(videoElement);
 
 let currentEffect = 'rain';
 let isRaining = false;

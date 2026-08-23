@@ -333,8 +333,9 @@ export class ARFighter {
 
     async initCamera() {
         const videoElement = document.createElement('video');
-        videoElement.style.display = 'none';
+        videoElement.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-999;';
         videoElement.setAttribute('playsinline', '');
+        videoElement.setAttribute('webkit-playsinline', '');
         videoElement.setAttribute('autoplay', '');
         videoElement.setAttribute('muted', '');
         videoElement.muted = true;
@@ -362,8 +363,9 @@ export class ARFighter {
 
         // Initialize Remote Video Element for WebRTC PiP
         this.remoteVideoElement = document.createElement('video');
-        this.remoteVideoElement.style.display = 'none';
+        this.remoteVideoElement.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-999;';
         this.remoteVideoElement.setAttribute('playsinline', '');
+        this.remoteVideoElement.setAttribute('webkit-playsinline', '');
         this.remoteVideoElement.setAttribute('autoplay', '');
         this.remoteVideoElement.setAttribute('muted', '');
         this.remoteVideoElement.muted = true;
