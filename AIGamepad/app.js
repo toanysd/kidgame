@@ -201,6 +201,24 @@ if (gamePreset) {
                 punchL: 'space',
                 punchR: 'e'
             });
+        } else if (val === 'arcade_racing') {
+            setKeyMapping({
+                jump: 'up',
+                duck: 'down',
+                left: 'left',
+                right: 'right',
+                punchL: 'space',
+                punchR: 'enter'
+            });
+        } else if (val === 'arcade_claw' || val === 'arcade_tetris') {
+            setKeyMapping({
+                jump: 'w',
+                duck: 's',
+                left: 'a',
+                right: 'd',
+                punchL: 'space',
+                punchR: 'enter'
+            });
         }
     });
 }
@@ -600,7 +618,11 @@ function startArcade(gameUrl) {
     const mapPunchR = document.getElementById('map-punchR');
     const steerConfig = document.getElementById('steeringConfig');
 
+    const gamePresetSelect = document.getElementById('gamePreset');
+
     if (gameUrl.includes('racing.html')) {
+        if (gamePresetSelect) gamePresetSelect.value = 'arcade_racing';
+        setKeyMapping({ jump: 'up', duck: 'down', left: 'left', right: 'right', punchL: 'space', punchR: 'enter' });
         if (steerConfig) steerConfig.style.display = 'flex';
         if (mapJump) mapJump.style.display = 'flex';
         if (mapDuck) mapDuck.style.display = 'flex';
@@ -609,6 +631,8 @@ function startArcade(gameUrl) {
         if (mapPunchL) mapPunchL.style.display = 'none';
         if (mapPunchR) mapPunchR.style.display = 'none';
     } else if (gameUrl.includes('claw.html')) {
+        if (gamePresetSelect) gamePresetSelect.value = 'arcade_claw';
+        setKeyMapping({ jump: 'w', duck: 's', left: 'a', right: 'd', punchL: 'space', punchR: 'enter' });
         if (steerConfig) steerConfig.style.display = 'none';
         if (mapJump) mapJump.style.display = 'flex';
         if (mapDuck) mapDuck.style.display = 'flex';
@@ -617,6 +641,8 @@ function startArcade(gameUrl) {
         if (mapPunchL) mapPunchL.style.display = 'flex';
         if (mapPunchR) mapPunchR.style.display = 'flex';
     } else if (gameUrl.includes('tetris.html')) {
+        if (gamePresetSelect) gamePresetSelect.value = 'arcade_tetris';
+        setKeyMapping({ jump: 'w', duck: 's', left: 'a', right: 'd', punchL: 'space', punchR: 'enter' });
         if (steerConfig) steerConfig.style.display = 'none';
         if (mapJump) mapJump.style.display = 'flex';
         if (mapDuck) mapDuck.style.display = 'flex';

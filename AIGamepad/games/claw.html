@@ -203,24 +203,24 @@
             
             // State Machine Logic
             if (state === STATE.IDLE) {
-                // Move Left/Right (A, D, Left, Right)
-                if (keys.a || keys.arrowleft || keys.left) claw.x -= claw.speed;
-                if (keys.d || keys.arrowright || keys.right) claw.x += claw.speed;
+                // Move Left/Right (A, D)
+                if (keys.a || keys.left) claw.x -= claw.speed;
+                if (keys.d || keys.right) claw.x += claw.speed;
                 
                 // Bounds (Cannot go into the chute area directly)
                 if (claw.x < 110) claw.x = 110; 
                 if (claw.x > canvas.width - 20) claw.x = canvas.width - 20;
 
-                // Drop command (W, Space, J, Up, Enter, Insert)
-                if (keys.w || keys.space || keys.j || keys.up || keys.arrowup || keys.enter || keys.insert) {
+                // Drop command (W, Space, J, Enter, Insert)
+                if (keys.w || keys.space || keys.j || keys.up || keys.enter || keys.insert) {
                     state = STATE.DROP;
                 }
             } else if (state === STATE.DROP) {
                 claw.y += 5;
                 
-                // Cho phép điều khiển qua lại (A / D / Left / Right) ngay trong lúc tay gắp đang hạ xuống
-                if (keys.a || keys.arrowleft || keys.left) claw.x -= claw.speed * 0.8;
-                if (keys.d || keys.arrowright || keys.right) claw.x += claw.speed * 0.8;
+                // Cho phép điều khiển qua lại (A / D) ngay trong lúc tay gắp đang hạ xuống
+                if (keys.a || keys.left) claw.x -= claw.speed * 0.8;
+                if (keys.d || keys.right) claw.x += claw.speed * 0.8;
                 
                 // Giới hạn trong bể thú
                 if (claw.x < 110) claw.x = 110; 

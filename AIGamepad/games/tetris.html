@@ -486,7 +486,7 @@
             const now = Date.now();
 
             // Left
-            const isLeft = keys.a || keys.arrowleft || keys.left;
+            const isLeft = keys.a || keys.left;
             if (isLeft && now - lastActionTime.left > 120) {
                 if (!hasCollision(currentPiece.x - 1, currentPiece.y, currentPiece.shape)) {
                     currentPiece.x--;
@@ -496,7 +496,7 @@
             }
 
             // Right
-            const isRight = keys.d || keys.arrowright || keys.right;
+            const isRight = keys.d || keys.right;
             if (isRight && now - lastActionTime.right > 120) {
                 if (!hasCollision(currentPiece.x + 1, currentPiece.y, currentPiece.shape)) {
                     currentPiece.x++;
@@ -505,15 +505,15 @@
                 lastActionTime.right = now;
             }
 
-            // Rotate (W / Up / J)
-            const isRotate = keys.w || keys.arrowup || keys.up || keys.j;
+            // Rotate (W / J)
+            const isRotate = keys.w || keys.up || keys.j;
             if (isRotate && now - lastActionTime.rotate > 220) {
                 rotatePiece();
                 lastActionTime.rotate = now;
             }
 
             // Soft Drop (S / Down)
-            const isSoftDrop = keys.s || keys.arrowdown || keys.down;
+            const isSoftDrop = keys.s || keys.down;
             if (isSoftDrop) {
                 if (!hasCollision(currentPiece.x, currentPiece.y + 1, currentPiece.shape)) {
                     currentPiece.y++;

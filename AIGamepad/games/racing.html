@@ -175,8 +175,8 @@
 
             // Speed Control
             let oldSpeed = speedMult;
-            if (keys.w || keys.arrowup || keys.up) speedMult += 0.05;
-            if (keys.s || keys.arrowdown || keys.down) speedMult -= 0.05;
+            if (keys.arrowup || keys.up) speedMult += 0.05;
+            if (keys.arrowdown || keys.down) speedMult -= 0.05;
             if (speedMult < 0.5) speedMult = 0.5;
             if (speedMult > 4.0) speedMult = 4.0;
             
@@ -186,8 +186,8 @@
             }
 
             // Move car
-            if (keys.a || keys.arrowleft || keys.left) car.x -= car.speed;
-            if (keys.d || keys.arrowright || keys.right) car.x += car.speed;
+            if (keys.arrowleft || keys.left) car.x -= car.speed;
+            if (keys.arrowright || keys.right) car.x += car.speed;
             if (car.x < 40) car.x = 40;
             if (car.x > canvas.width - 40 - car.width) car.x = canvas.width - 40 - car.width;
 
