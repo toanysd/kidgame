@@ -35,7 +35,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 pressed_keys = set()
 
 async def handler(websocket):
-    logging.info(f"Đã kết nối với Web AI Gamepad: {websocket.remote_address}")
+    logging.info(f"Da ket noi voi Web AI Gamepad: {websocket.remote_address}")
     try:
         async for message in websocket:
             try:
@@ -85,12 +85,12 @@ async def handler(websocket):
                         pressed_keys.remove(mapped_key)
                         
             except json.JSONDecodeError:
-                logging.error("Lỗi parse JSON")
+                logging.error("Loi parse JSON")
             except Exception as e:
-                logging.error(f"Lỗi thực thi phím: {e}")
+                logging.error(f"Loi thuc thi phim: {e}")
                 
     except websockets.exceptions.ConnectionClosed:
-        logging.info("Mất kết nối với AI Gamepad.")
+        logging.info("Mat ket noi voi AI Gamepad.")
     finally:
         for k in list(pressed_keys):
             try:
