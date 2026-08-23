@@ -220,8 +220,11 @@ function setKeyMapping(newMap) {
 // MEDIAPIPE POSE & GESTURE RECOGNITION
 // =========================================================
 let poseDetector = null;
+let isCameraInitialized = false;
 
 function initCamera() {
+    if (isCameraInitialized) return;
+    isCameraInitialized = true;
     poseDetector = new Pose({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
     });
