@@ -86,44 +86,55 @@ body {
     overflow: hidden;
 }
 
-/* Sidebar: Key Mapping */
+/* Sidebar: Key Mapping & Settings */
 .sidebar {
     width: 380px;
     background: #1e293b;
     border-right: 1px solid #334155;
     display: flex;
     flex-direction: column;
+    height: calc(100vh - 65px);
 }
 
 .sidebar-header {
-    padding: 20px;
+    padding: 15px;
     border-bottom: 1px solid #334155;
+    background: #1e293b;
 }
 
 .sidebar-header h2 {
-    font-size: 18px;
-    margin-bottom: 5px;
+    font-size: 17px;
+    margin-bottom: 2px;
 }
 
-.sidebar-header p {
-    font-size: 13px;
-    color: #94a3b8;
+.sidebar-tab-content {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #0f172a;
 }
 
-.mapping-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.sidebar-tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-tab-content::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+.sidebar-tab-content::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 3px;
+}
+
+.tab-btn.active {
+    background: #38bdf8 !important;
+    color: #0f172a !important;
 }
 
 .map-item {
     background: #0f172a;
     border: 1px solid #334155;
-    border-radius: 12px;
-    padding: 15px;
+    border-radius: 10px;
+    padding: 10px 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -137,16 +148,17 @@ body {
 .map-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .map-icon {
-    font-size: 24px;
+    font-size: 20px;
 }
 
 .map-name {
     font-weight: 600;
-    font-size: 15px;
+    font-size: 14px;
+    color: #f1f5f9;
 }
 
 .key-input {
@@ -154,12 +166,13 @@ body {
     border: 1px solid #475569;
     color: #38bdf8;
     font-family: monospace;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
     text-align: center;
-    width: 60px;
-    height: 40px;
-    border-radius: 8px;
+    min-width: 75px;
+    height: 36px;
+    padding: 0 8px;
+    border-radius: 6px;
     outline: none;
     cursor: pointer;
     text-transform: uppercase;

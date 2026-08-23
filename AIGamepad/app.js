@@ -36,15 +36,16 @@ function connectWebSocket() {
         connStatus.classList.add('connected');
         connText.innerText = "Đã Kết Nối Server";
         setupModal.style.display = 'none';
-        document.getElementById('steeringConfig').style.display = 'block';
+        const st = document.getElementById('steeringConfig');
+        if (st) st.style.display = 'flex';
         
         // Show context mapping
-        document.getElementById('map-jump').style.display = 'flex';
-        document.getElementById('map-duck').style.display = 'flex';
-        document.getElementById('map-left').style.display = 'flex';
-        document.getElementById('map-right').style.display = 'flex';
-        document.getElementById('map-punchL').style.display = 'flex';
-        document.getElementById('map-punchR').style.display = 'flex';
+        const mj = document.getElementById('map-jump'); if (mj) mj.style.display = 'flex';
+        const md = document.getElementById('map-duck'); if (md) md.style.display = 'flex';
+        const ml = document.getElementById('map-left'); if (ml) ml.style.display = 'flex';
+        const mr = document.getElementById('map-right'); if (mr) mr.style.display = 'flex';
+        const mpl = document.getElementById('map-punchL'); if (mpl) mpl.style.display = 'flex';
+        const mpr = document.getElementById('map-punchR'); if (mpr) mpr.style.display = 'flex';
         
         initCamera();
     };
@@ -808,3 +809,36 @@ function sendAvatarToGame() {
         }, '*');
     }
 }
+
+// Sidebar Tab Switcher
+window.switchSidebarTab = function(tabName) {
+    const tabKeys = document.getElementById('tabContentKeys');
+    const tabSettings = document.getElementById('tabContentSettings');
+    const btnKeys = document.getElementById('tabBtnKeys');
+    const btnSettings = document.getElementById('tabBtnSettings');
+
+    if (tabName === 'keys') {
+        if (tabKeys) tabKeys.style.display = 'flex';
+        if (tabSettings) tabSettings.style.display = 'none';
+        if (btnKeys) {
+            btnKeys.style.background = '#38bdf8';
+            btnKeys.style.color = '#0f172a';
+        }
+        if (btnSettings) {
+            btnSettings.style.background = '#334155';
+            btnSettings.style.color = '#94a3b8';
+        }
+    } else {
+        if (tabKeys) tabKeys.style.display = 'none';
+        if (tabSettings) tabSettings.style.display = 'flex';
+        if (btnSettings) {
+            btnSettings.style.background = '#38bdf8';
+            btnSettings.style.color = '#0f172a';
+        }
+        if (btnKeys) {
+            btnKeys.style.background = '#334155';
+            btnKeys.style.color = '#94a3b8';
+        }
+    }
+};
+

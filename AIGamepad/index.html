@@ -28,137 +28,156 @@
         <!-- Sidebar: Key Mapping -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h2>Cài Đặt Nút Bấm</h2>
-                <p>Nhấp vào ô vuông để đổi phím</p>
+                <h2>Cài Đặt Bộ Điều Khiển</h2>
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                    <button class="tab-btn active" id="tabBtnKeys" onclick="switchSidebarTab('keys')" style="flex: 1; padding: 7px; border-radius: 6px; border: none; background: #38bdf8; color: #0f172a; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s;">🎮 Gán Phím</button>
+                    <button class="tab-btn" id="tabBtnSettings" onclick="switchSidebarTab('settings')" style="flex: 1; padding: 7px; border-radius: 6px; border: none; background: #334155; color: #94a3b8; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s;">⚙️ Tùy Chỉnh</button>
+                </div>
             </div>
 
-            <!-- Avatar Configuration -->
-            <div id="avatarConfig" style="padding: 15px; background: #334155; margin: 15px; border-radius: 10px;">
-                <label style="font-size: 14px; font-weight: bold; color: #38bdf8;">Ảnh Người Chơi (Avatar):</label>
-                
-                <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
-                    <div style="width: 50px; height: 50px; border-radius: 50%; background: #475569; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 2px solid #38bdf8; flex-shrink: 0;">
-                        <img id="avatarPreview" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                        <span id="avatarPlaceholder" style="font-size: 24px;">👤</span>
+            <!-- TAB 1: GÁN PHÍM & PRESETS -->
+            <div id="tabContentKeys" class="sidebar-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
+                    <label style="font-size: 12px; font-weight: bold; color: #38bdf8; display: block; margin-bottom: 4px;">🎮 Chọn Cấu Hình Game:</label>
+                    <select id="gamePreset" style="width: 100%; padding: 6px; border-radius: 6px; background: #1e293b; color: #38bdf8; font-weight: bold; font-size: 13px; border: 1px solid #475569;">
+                        <option value="supertuxkart">🏎️ SuperTuxKart (W, S, A, D, J, K)</option>
+                        <option value="roadrash_punch">🏍️ Road Rash (Đấm Space + Đá Enter)</option>
+                        <option value="roadrash_swing">🏍️ Road Rash (Vung Gậy Insert + Nitro N)</option>
+                        <option value="roblox">⛏️ Roblox / Minecraft (W, S, A, D, Space, E)</option>
+                        <option value="custom">⚙️ Tùy chỉnh phím tự do...</option>
+                    </select>
+                </div>
+
+                <div class="mapping-list" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Jump -->
+                    <div class="map-item" id="map-jump">
+                        <div class="map-info">
+                            <span class="map-icon">⬆️</span>
+                            <div>
+                                <div class="map-name">Tiến / Ga</div>
+                                <div style="font-size: 11px; color: #94a3b8;">Giơ 2 tay quá vai</div>
+                            </div>
+                        </div>
+                        <input type="text" class="key-input" id="key-jump" value="w" readonly>
                     </div>
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
-                        <label class="menu-btn" style="padding: 5px; font-size: 12px; margin: 0; cursor: pointer; text-align: center; background: #64748b;">
-                            📁 Tải lên
-                            <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
-                        </label>
-                        <button id="btnCaptureAvatar" class="menu-btn" style="padding: 5px; font-size: 12px; margin: 0; background: #ef4444; color: white;">📸 Chụp Cam</button>
+                    <!-- Duck -->
+                    <div class="map-item" id="map-duck">
+                        <div class="map-info">
+                            <span class="map-icon">⬇️</span>
+                            <div>
+                                <div class="map-name">Lùi / Phanh</div>
+                                <div style="font-size: 11px; color: #94a3b8;">Hạ 2 tay dưới vai</div>
+                            </div>
+                        </div>
+                        <input type="text" class="key-input" id="key-duck" value="s" readonly>
+                    </div>
+                    <!-- Lean Left -->
+                    <div class="map-item" id="map-left">
+                        <div class="map-info">
+                            <span class="map-icon">⬅️</span>
+                            <div>
+                                <div class="map-name">Rẽ Trái</div>
+                                <div style="font-size: 11px; color: #94a3b8;">Nghiêng tay trái</div>
+                            </div>
+                        </div>
+                        <input type="text" class="key-input" id="key-left" value="a" readonly>
+                    </div>
+                    <!-- Lean Right -->
+                    <div class="map-item" id="map-right">
+                        <div class="map-info">
+                            <span class="map-icon">➡️</span>
+                            <div>
+                                <div class="map-name">Rẽ Phải</div>
+                                <div style="font-size: 11px; color: #94a3b8;">Nghiêng tay phải</div>
+                            </div>
+                        </div>
+                        <input type="text" class="key-input" id="key-right" value="d" readonly>
+                    </div>
+                    <!-- Punch Left -->
+                    <div class="map-item" id="map-punchL">
+                        <div class="map-info">
+                            <span class="map-icon">🥊</span>
+                            <div>
+                                <div class="map-name">Tay Trái (Vũ khí/Bắn)</div>
+                                <div style="font-size: 11px; color: #94a3b8;">Giơ tay trái qua đầu</div>
+                            </div>
+                        </div>
+                        <input type="text" class="key-input" id="key-punchL" value="j" readonly>
+                    </div>
+                    <!-- Punch Right -->
+                    <div class="map-item" id="map-punchR">
+                        <div class="map-info">
+                            <span class="map-icon">🚀</span>
+                            <div>
+                                <div class="map-name">Tay Phải (Nitro/Đá)</div>
+                                <div style="font-size: 11px; color: #94a3b8;">Giơ tay phải qua đầu</div>
+                            </div>
+                        </div>
+                        <input type="text" class="key-input" id="key-punchR" value="k" readonly>
                     </div>
                 </div>
-                
-                <label style="display: flex; align-items: center; gap: 8px; margin-top: 15px; color: #f8fafc; font-size: 13px; cursor: pointer;">
-                    <input type="checkbox" id="enableAvatar" checked>
-                    Hiển thị mặt người chơi trên Xe
-                </label>
+
+                <div style="background: rgba(56, 189, 248, 0.08); border: 1px dashed #38bdf8; padding: 8px 10px; border-radius: 6px; font-size: 11px; color: #94a3b8; line-height: 1.4;">
+                    💡 <b>Cách đổi phím:</b> Click vào ô phím -> Bấm phím bất kỳ trên bàn phím (kể cả <code>Insert</code>, <code>Space</code>, <code>Enter</code>, <code>Mũi tên</code>...).
+                </div>
             </div>
 
-            <!-- Steering Configuration -->
-            <div id="steeringConfig" style="display: none; padding: 15px; background: #334155; margin: 15px; border-radius: 10px;">
-                <label style="font-size: 14px; font-weight: bold; color: #38bdf8;">Chế độ bẻ lái Trái/Phải:</label>
-                <select id="steerMode" style="width: 100%; padding: 8px; margin-top: 8px; border-radius: 6px; background: #0f172a; color: white; border: 1px solid #475569;">
-                    <option value="all">Tất cả (Vô lăng + Đầu + Nghiêng)</option>
-                    <option value="wheel">Cầm Vô Lăng (Tay)</option>
-                    <option value="head">Nghiêng Đầu</option>
-                    <option value="lean">Nghiêng Người</option>
-                </select>
-
-                <label style="font-size: 14px; font-weight: bold; color: #38bdf8; display: block; margin-top: 15px;">Chế độ Ga / Phanh:</label>
-                <select id="gasMode" style="width: 100%; padding: 8px; margin-top: 8px; border-radius: 6px; background: #0f172a; color: white; border: 1px solid #475569;">
-                    <option value="distance">Chụm tay (Tiến) / Dang tay (Lùi) - Tốt nhất</option>
-                    <option value="hands">Nâng / Hạ tay (Ngồi gần màn hình)</option>
-                    <option value="head">Ngửa đầu / Cúi đầu</option>
-                    <option value="body">Nhảy / Ngồi (Cần đứng xa camera)</option>
-                </select>
-
-                <div style="margin-top: 15px; display: flex; align-items: center; gap: 10px; background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #22c55e;">
-                    <input type="checkbox" id="autoGas" style="width: 20px; height: 20px;">
-                    <label for="autoGas" style="font-size: 14px; font-weight: bold; color: #22c55e; cursor: pointer;">🏎️ Ga Tự Động (Auto-Gas)</label>
-                </div>
-
-                <label style="font-size: 14px; font-weight: bold; color: #38bdf8; display: block; margin-top: 15px;">Độ nhạy Bẻ Lái:</label>
-                <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-                    <span style="color: #94a3b8; font-size: 12px;">Nhạy</span>
-                    <input type="range" id="steerSensSlider" min="0.01" max="0.30" step="0.01" value="0.08" style="flex: 1;">
-                    <span style="color: #94a3b8; font-size: 12px;">Trì hoãn</span>
+            <!-- TAB 2: TÙY CHỈNH (AVATAR & ĐỘ NHẠY) -->
+            <div id="tabContentSettings" class="sidebar-tab-content" style="flex: 1; overflow-y: auto; padding: 12px; display: none; flex-direction: column; gap: 12px;">
+                <!-- Avatar Configuration -->
+                <div id="avatarConfig" style="padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155;">
+                    <label style="font-size: 13px; font-weight: bold; color: #38bdf8; display: block; margin-bottom: 8px;">👤 Ảnh Người Chơi (Avatar):</label>
+                    
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 45px; height: 45px; border-radius: 50%; background: #475569; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 2px solid #38bdf8; flex-shrink: 0;">
+                            <img id="avatarPreview" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                            <span id="avatarPlaceholder" style="font-size: 20px;">👤</span>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                            <label class="menu-btn" style="padding: 4px; font-size: 11px; margin: 0; cursor: pointer; text-align: center; background: #64748b;">
+                                📁 Tải ảnh lên
+                                <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
+                            </label>
+                            <button id="btnCaptureAvatar" class="menu-btn" style="padding: 4px; font-size: 11px; margin: 0; background: #ef4444; color: white;">📸 Chụp Webcam</button>
+                        </div>
+                    </div>
+                    
+                    <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px; color: #f8fafc; font-size: 12px; cursor: pointer;">
+                        <input type="checkbox" id="enableAvatar" checked>
+                        Hiển thị mặt người chơi trên Xe
+                    </label>
                 </div>
 
-                <label style="font-size: 14px; font-weight: bold; color: #38bdf8; display: block; margin-top: 15px;">Độ nhạy Cúi/Ngẩng (Ga/Phanh):</label>
-                <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-                    <span style="color: #94a3b8; font-size: 12px;">Nhạy</span>
-                    <input type="range" id="pitchSensSlider" min="0.02" max="0.25" step="0.01" value="0.10" style="flex: 1;">
-                    <span style="color: #94a3b8; font-size: 12px;">Trì hoãn</span>
-                </div>
+                <!-- Steering & Sensitivity Configuration -->
+                <div id="steeringConfig" style="padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 10px;">
+                    <div>
+                        <label style="font-size: 13px; font-weight: bold; color: #38bdf8;">Chế độ bẻ lái Trái/Phải:</label>
+                        <select id="steerMode" style="width: 100%; padding: 6px; margin-top: 4px; border-radius: 6px; background: #1e293b; color: white; border: 1px solid #475569; font-size: 12px;">
+                            <option value="all">Tất cả (Vô lăng + Đầu + Nghiêng)</option>
+                            <option value="wheel">Cầm Vô Lăng (Tay)</option>
+                            <option value="head">Nghiêng Đầu</option>
+                            <option value="lean">Nghiêng Người</option>
+                        </select>
+                    </div>
 
-                <label style="font-size: 14px; font-weight: bold; color: #38bdf8; display: block; margin-top: 15px;">Thanh tốc độ đua:</label>
-                <input type="range" id="speedSlider" min="0.5" max="4.0" step="0.1" value="1.0" style="width: 100%; margin-top: 8px;">
-            </div>
-            
-            <div style="margin: 15px;">
-                <label style="font-size: 14px; font-weight: bold; color: #38bdf8;">🎮 Cấu hình Game sẵn có:</label>
-                <select id="gamePreset" style="width: 100%; padding: 8px; margin-top: 6px; border-radius: 6px; background: #0f172a; color: #38bdf8; font-weight: bold; border: 1px solid #475569;">
-                    <option value="supertuxkart">🏎️ SuperTuxKart (W, S, A, D, J, K)</option>
-                    <option value="roadrash_punch">🏍️ Road Rash (Đấm Space + Đá Enter)</option>
-                    <option value="roadrash_swing">🏍️ Road Rash (Vung Gậy Insert + Nitro N)</option>
-                    <option value="roblox">⛏️ Roblox / Minecraft (W, S, A, D, Space, E)</option>
-                    <option value="custom">⚙️ Tùy chỉnh phím tự do...</option>
-                </select>
-                <p style="font-size: 12px; color: #94a3b8; margin-top: 6px; line-height: 1.4;">
-                    💡 <b>Cách đổi phím:</b> Click chuột vào ô phím bên dưới -> Bấm phím bất kỳ trên bàn phím (kể cả <code>Insert</code>, <code>Space</code>, <code>Enter</code>, <code>Mũi tên</code>...). Hệ thống sẽ tự động lưu!
-                </p>
-            </div>
-            
-            <div class="mapping-list">
-                <!-- Jump -->
-                <div class="map-item" id="map-jump">
-                    <div class="map-info">
-                        <span class="map-icon">⬆️</span>
-                        <span class="map-name">Nhảy / Ga (Jump)</span>
+                    <div style="display: flex; align-items: center; gap: 8px; background: #1e293b; padding: 8px; border-radius: 6px; border: 1px solid #22c55e;">
+                        <input type="checkbox" id="autoGas" style="width: 18px; height: 18px;">
+                        <label for="autoGas" style="font-size: 12px; font-weight: bold; color: #22c55e; cursor: pointer;">🏎️ Ga Tự Động (Auto-Gas)</label>
                     </div>
-                    <input type="text" class="key-input" id="key-jump" value="w" readonly>
-                </div>
-                <!-- Duck -->
-                <div class="map-item" id="map-duck">
-                    <div class="map-info">
-                        <span class="map-icon">⬇️</span>
-                        <span class="map-name">Ngồi / Phanh (Duck)</span>
+
+                    <div>
+                        <label style="font-size: 12px; font-weight: bold; color: #38bdf8; display: block;">Độ nhạy Bẻ Lái:</label>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 3px;">
+                            <span style="color: #94a3b8; font-size: 11px;">Nhạy</span>
+                            <input type="range" id="steerSensSlider" min="0.01" max="0.30" step="0.01" value="0.08" style="flex: 1;">
+                            <span style="color: #94a3b8; font-size: 11px;">Chậm</span>
+                        </div>
                     </div>
-                    <input type="text" class="key-input" id="key-duck" value="s" readonly>
-                </div>
-                <!-- Lean Left -->
-                <div class="map-item" id="map-left">
-                    <div class="map-info">
-                        <span class="map-icon">⬅️</span>
-                        <span class="map-name">Sang Trái</span>
+
+                    <div>
+                        <label style="font-size: 12px; font-weight: bold; color: #38bdf8; display: block;">Thanh tốc độ Arcade:</label>
+                        <input type="range" id="speedSlider" min="0.5" max="4.0" step="0.1" value="1.0" style="width: 100%; margin-top: 4px;">
                     </div>
-                    <input type="text" class="key-input" id="key-left" value="a" readonly>
-                </div>
-                <!-- Lean Right -->
-                <div class="map-item" id="map-right">
-                    <div class="map-info">
-                        <span class="map-icon">➡️</span>
-                        <span class="map-name">Sang Phải</span>
-                    </div>
-                    <input type="text" class="key-input" id="key-right" value="d" readonly>
-                </div>
-                <!-- Punch Left -->
-                <div class="map-item" id="map-punchL">
-                    <div class="map-info">
-                        <span class="map-icon">🥊</span>
-                        <span class="map-name">Đấm Trái</span>
-                    </div>
-                    <input type="text" class="key-input" id="key-punchL" value="j" readonly>
-                </div>
-                <!-- Punch Right -->
-                <div class="map-item" id="map-punchR">
-                    <div class="map-info">
-                        <span class="map-icon">🥊</span>
-                        <span class="map-name">Đấm Phải</span>
-                    </div>
-                    <input type="text" class="key-input" id="key-punchR" value="k" readonly>
                 </div>
             </div>
         </aside>
@@ -235,6 +254,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.1.1"></script>
+    <script src="app.js?v=1.1.2"></script>
 </body>
 </html>
