@@ -54,10 +54,14 @@
         });
         window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
         
+        let sysMapping = { jump: 'up', duck: 'down', left: 'left', right: 'right', punchL: 'space', punchR: 'enter' };
+
         // Listen for postMessage from parent iframe
         window.addEventListener('message', (e) => {
             if (e.data) {
-                if (e.data.type === 'keyboard') {
+                if (e.data.type === 'sync_mapping') {
+                    sysMapping = e.data.mapping;
+                } else if (e.data.type === 'keyboard') {
                     const k = e.data.key.toLowerCase();
                     if (e.data.action === 'keydown') {
                         keys[k] = true;
@@ -175,8 +179,8 @@
 
             // Speed Control
             let oldSpeed = speedMult;
-            if (keys.arrowup || keys.up) speedMult += 0.05;
-            if (keys.arrowdown || keys.down) speedMult -= 0.05;
+            if (keys[sysMapping.jump]) speedMult += 0.05;
+            if (keys[sysMapping.duck]) speedMult -= 0.05;
             if (speedMult < 0.5) speedMult = 0.5;
             if (speedMult > 4.0) speedMult = 4.0;
             
@@ -186,8 +190,8 @@
             }
 
             // Move car
-            if (keys.arrowleft || keys.left) car.x -= car.speed;
-            if (keys.arrowright || keys.right) car.x += car.speed;
+            if (keys[sysMapping.left]) car.x -= car.speed;
+            if (keys[sysMapping.right]) car.x += car.speed;
             if (car.x < 40) car.x = 40;
             if (car.x > canvas.width - 40 - car.width) car.x = canvas.width - 40 - car.width;
 

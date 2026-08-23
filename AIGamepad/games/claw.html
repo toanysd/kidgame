@@ -52,15 +52,20 @@
             if ((k === ' ' || k === 'space' || k === 'enter') && !gameActive) restart();
         });
         window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+        let sysMapping = { jump: 'w', duck: 's', left: 'a', right: 'd', punchL: 'space', punchR: 'enter' };
         
         window.addEventListener('message', (e) => {
-            if (e.data && e.data.type === 'keyboard') {
-                const k = e.data.key.toLowerCase();
-                if (e.data.action === 'keydown') {
-                    keys[k] = true;
-                    if ((k === ' ' || k === 'space' || k === 'enter') && !gameActive) restart();
-                } else if (e.data.action === 'keyup') {
-                    keys[k] = false;
+            if (e.data) {
+                if (e.data.type === 'sync_mapping') {
+                    sysMapping = e.data.mapping;
+                } else if (e.data.type === 'keyboard') {
+                    const k = e.data.key.toLowerCase();
+                    if (e.data.action === 'keydown') {
+                        keys[k] = true;
+                        if ((k === ' ' || k === 'space' || k === 'enter') && !gameActive) restart();
+                    } else if (e.data.action === 'keyup') {
+                        keys[k] = false;
+                    }
                 }
             }
         });
@@ -203,24 +208,24 @@
             
             // State Machine Logic
             if (state === STATE.IDLE) {
-                // Move Left/Right (A, D)
-                if (keys.a || keys.left) claw.x -= claw.speed;
-                if (keys.d || keys.right) claw.x += claw.speed;
+                // Move Left/Right
+                if (keys[sysMapping.left]) claw.x -= claw.speed;
+                if (keys[sysMapping.right]) claw.x += claw.speed;
                 
                 // Bounds (Cannot go into the chute area directly)
                 if (claw.x < 110) claw.x = 110; 
                 if (claw.x > canvas.width - 20) claw.x = canvas.width - 20;
 
-                // Drop command (W, Space, J, Enter, Insert)
-                if (keys.w || keys.space || keys.j || keys.up || keys.enter || keys.insert) {
+                // Drop command
+                if (keys[sysMapping.jump] || keys[sysMapping.punchL] || keys[sysMapping.punchR]) {
                     state = STATE.DROP;
                 }
             } else if (state === STATE.DROP) {
                 claw.y += 5;
                 
-                // Cho phép điều khiển qua lại (A / D) ngay trong lúc tay gắp đang hạ xuống
-                if (keys.a || keys.left) claw.x -= claw.speed * 0.8;
-                if (keys.d || keys.right) claw.x += claw.speed * 0.8;
+                // Cho phép điều khiển qua lại ngay trong lúc tay gắp đang hạ xuống
+                if (keys[sysMapping.left]) claw.x -= claw.speed * 0.8;
+                if (keys[sysMapping.right]) claw.x += claw.speed * 0.8;
                 
                 // Giới hạn trong bể thú
                 if (claw.x < 110) claw.x = 110; 

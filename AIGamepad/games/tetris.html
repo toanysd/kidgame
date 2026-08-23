@@ -486,7 +486,7 @@
             const now = Date.now();
 
             // Left
-            const isLeft = keys.a || keys.left;
+            const isLeft = keys[sysMapping.left];
             if (isLeft && now - lastActionTime.left > 120) {
                 if (!hasCollision(currentPiece.x - 1, currentPiece.y, currentPiece.shape)) {
                     currentPiece.x--;
@@ -496,7 +496,7 @@
             }
 
             // Right
-            const isRight = keys.d || keys.right;
+            const isRight = keys[sysMapping.right];
             if (isRight && now - lastActionTime.right > 120) {
                 if (!hasCollision(currentPiece.x + 1, currentPiece.y, currentPiece.shape)) {
                     currentPiece.x++;
@@ -506,14 +506,14 @@
             }
 
             // Rotate (W / J)
-            const isRotate = keys.w || keys.up || keys.j;
+            const isRotate = keys[sysMapping.jump] || keys[sysMapping.punchL];
             if (isRotate && now - lastActionTime.rotate > 220) {
                 rotatePiece();
                 lastActionTime.rotate = now;
             }
 
             // Soft Drop (S / Down)
-            const isSoftDrop = keys.s || keys.down;
+            const isSoftDrop = keys[sysMapping.duck];
             if (isSoftDrop) {
                 if (!hasCollision(currentPiece.x, currentPiece.y + 1, currentPiece.shape)) {
                     currentPiece.y++;
@@ -523,7 +523,7 @@
             }
 
             // Hard Drop (Space / Enter / K / Insert)
-            const isHardDrop = keys.space || keys.enter || keys.k || keys.insert;
+            const isHardDrop = keys[sysMapping.punchR];
             if (isHardDrop && now - lastActionTime.hardDrop > 350) {
                 hardDrop();
                 lastActionTime.hardDrop = now;
@@ -653,14 +653,20 @@
             keys[e.key.toLowerCase()] = false;
         });
 
+        let sysMapping = { jump: 'w', duck: 's', left: 'a', right: 'd', punchL: 'space', punchR: 'enter' };
+
         window.addEventListener('message', (e) => {
-            if (e.data && e.data.type === 'keyboard') {
-                const k = e.data.key.toLowerCase();
-                if (e.data.action === 'keydown') {
-                    keys[k] = true;
-                    if ((k === ' ' || k === 'space') && !gameActive) restartGame();
-                } else if (e.data.action === 'keyup') {
-                    keys[k] = false;
+            if (e.data) {
+                if (e.data.type === 'sync_mapping') {
+                    sysMapping = e.data.mapping;
+                } else if (e.data.type === 'keyboard') {
+                    const k = e.data.key.toLowerCase();
+                    if (e.data.action === 'keydown') {
+                        keys[k] = true;
+                        if ((k === ' ' || k === 'space') && !gameActive) restartGame();
+                    } else if (e.data.action === 'keyup') {
+                        keys[k] = false;
+                    }
                 }
             }
         });

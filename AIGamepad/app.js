@@ -153,6 +153,7 @@ window.addEventListener('keydown', (e) => {
         try {
             localStorage.setItem('aigamepad_custom_keys', JSON.stringify(mapping));
         } catch (err) {}
+        if (typeof syncMappingToArcade === 'function') syncMappingToArcade();
 
         const presetEl = document.getElementById('gamePreset');
         if (presetEl) presetEl.value = 'custom';
@@ -232,6 +233,17 @@ function setKeyMapping(newMap) {
     try {
         localStorage.setItem('aigamepad_custom_keys', JSON.stringify(mapping));
     } catch (err) {}
+    syncMappingToArcade();
+}
+
+function syncMappingToArcade() {
+    const frame = document.getElementById('arcadeFrame');
+    if (frame && frame.contentWindow && window.arcadeMode) {
+        frame.contentWindow.postMessage({
+            type: 'sync_mapping',
+            mapping: mapping
+        }, '*');
+    }
 }
 
 // =========================================================
@@ -601,6 +613,7 @@ btnConnect.addEventListener('click', () => {
 function startArcade(gameUrl) {
     const frame = document.getElementById('arcadeFrame');
     frame.src = gameUrl;
+    frame.onload = () => syncMappingToArcade();
     frame.style.display = 'block';
     document.body.classList.add('arcade-mode');
     

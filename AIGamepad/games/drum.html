@@ -50,18 +50,24 @@
             document.getElementById('score').innerText = score;
         }
 
+        let sysMapping = { punchL: 'space', punchR: 'enter' };
+        
         window.addEventListener('keydown', (e) => {
             const k = e.key.toLowerCase();
-            if (k === 'j' || k === 'a' || k === 'arrowleft') hitDrum('L');
-            if (k === 'k' || k === 'd' || k === 'arrowright') hitDrum('R');
+            if (k === sysMapping.punchL) hitDrum('L');
+            if (k === sysMapping.punchR) hitDrum('R');
         });
 
         // Listen for postMessage from parent iframe
         window.addEventListener('message', (e) => {
-            if (e.data && e.data.type === 'keyboard' && e.data.action === 'keydown') {
-                const k = e.data.key.toLowerCase();
-                if (k === 'j' || k === 'a' || k === 'arrowleft' || k === 'punchl') hitDrum('L');
-                if (k === 'k' || k === 'd' || k === 'arrowright' || k === 'punchr') hitDrum('R');
+            if (e.data) {
+                if (e.data.type === 'sync_mapping') {
+                    sysMapping = e.data.mapping;
+                } else if (e.data.type === 'keyboard' && e.data.action === 'keydown') {
+                    const k = e.data.key.toLowerCase();
+                    if (k === sysMapping.punchL) hitDrum('L');
+                    if (k === sysMapping.punchR) hitDrum('R');
+                }
             }
         });
     </script>
