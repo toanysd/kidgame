@@ -213,27 +213,38 @@
                     state = STATE.DROP;
                 }
             } else if (state === STATE.DROP) {
-                claw.y += 6;
+                claw.y += 5;
                 
+                // Cho phép điều khiển qua lại (A / D) ngay trong lúc tay gắp đang hạ xuống
+                if (keys.a || keys.arrowleft) claw.x -= claw.speed * 0.8;
+                if (keys.d || keys.arrowright) claw.x += claw.speed * 0.8;
+                
+                // Giới hạn trong bể thú
+                if (claw.x < 110) claw.x = 110; 
+                if (claw.x > canvas.width - 20) claw.x = canvas.width - 20;
+
                 // Check if hit floor or prize
                 let hit = null;
                 for (let p of prizes) {
-                    if (claw.y + 40 >= p.y - p.size/2 && Math.abs(claw.x - p.x) < 30) {
+                    if (claw.y + 40 >= p.y - p.size/2 && Math.abs(claw.x - p.x) < 32) {
                         hit = p;
                         break;
                     }
                 }
 
-                if (hit || claw.y > canvas.height - 50) {
+                // Cho phép bấm nút Gắp sớm (J / S / M) hoặc khi chạm đáy / chạm thú
+                const manualGrab = (keys.s || keys.j || keys.m) && claw.y > 100;
+
+                if (hit || claw.y > canvas.height - 50 || manualGrab) {
                     state = STATE.GRAB;
                     setTimeout(() => {
-                        // Grab logic: 80% chance to grab if hit perfectly
-                        if (hit && Math.random() > 0.2) {
+                        // Grab logic: 85% chance to grab if hit target
+                        if (hit && Math.random() > 0.15) {
                             claw.item = hit;
                             prizes = prizes.filter(p => p.id !== hit.id);
                         }
                         state = STATE.RETRACT;
-                    }, 400); // Wait 0.4s to close claws
+                    }, 350); // Wait 0.35s to close claws
                 }
             } else if (state === STATE.RETRACT) {
                 claw.y -= 5;

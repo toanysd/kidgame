@@ -137,8 +137,54 @@ window.addEventListener('keydown', (e) => {
         const id = activeInput.id.replace('key-', '');
         mapping[id] = key;
         activeInput = null;
+        
+        const presetEl = document.getElementById('gamePreset');
+        if (presetEl) presetEl.value = 'custom';
     }
 });
+
+const gamePreset = document.getElementById('gamePreset');
+if (gamePreset) {
+    gamePreset.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val === 'roadrash') {
+            setKeyMapping({
+                jump: 'up',
+                duck: 'down',
+                left: 'left',
+                right: 'right',
+                punchL: 'space',
+                punchR: 'n'
+            });
+        } else if (val === 'supertuxkart') {
+            setKeyMapping({
+                jump: 'w',
+                duck: 's',
+                left: 'a',
+                right: 'd',
+                punchL: 'j',
+                punchR: 'k'
+            });
+        } else if (val === 'roblox') {
+            setKeyMapping({
+                jump: 'w',
+                duck: 's',
+                left: 'a',
+                right: 'd',
+                punchL: 'space',
+                punchR: 'e'
+            });
+        }
+    });
+}
+
+function setKeyMapping(newMap) {
+    for (let k in newMap) {
+        mapping[k] = newMap[k];
+        const el = document.getElementById('key-' + k);
+        if (el) el.value = newMap[k];
+    }
+}
 
 // =========================================================
 // MEDIAPIPE POSE & GESTURE RECOGNITION
