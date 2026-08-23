@@ -482,53 +482,52 @@ function processGestures(pl) {
     const leftVisible = leftWrist && leftWrist.visibility > 0.5;
     const rightVisible = rightWrist && rightWrist.visibility > 0.5;
 
-    // A. TRƯỜNG HỢP 1: KHÔNG THẤY TAY (Thả trôi - Không W, Không S)
-    if (!leftVisible && !rightVisible) {
+    // A. Xác định trạng thái của từng tay (HIDDEN, LOW, HIGH)
+    const yBuffer = 0.05; // Ngưỡng để xác định "cao hơn vai" rõ ràng
+    let leftState = 'HIDDEN';
+    if (leftVisible) {
+        leftState = leftWrist.y < (leftShoulder.y - yBuffer) ? 'HIGH' : 'LOW';
+    }
+
+    let rightState = 'HIDDEN';
+    if (rightVisible) {
+        rightState = rightWrist.y < (rightShoulder.y - yBuffer) ? 'HIGH' : 'LOW';
+    }
+
+    // B. Map trạng thái tay sang các nút (W, S, J, K)
+    // - khi hai tay hạ xuống (không thấy tay): buông tự do
+    if (leftState === 'HIDDEN' && rightState === 'HIDDEN') {
         shouldGas = false;
         shouldBrake = false;
     }
-    // B. TRƯỜNG HỢP 2: CẢ 2 TAY ĐỀU TRONG MÀN HÌNH (Lái xe, Ga, Phanh)
-    else if (leftVisible && rightVisible) {
-        const handsMidY = (leftWrist.y + rightWrist.y) / 2;
-
-        // 1. Giơ cả 2 tay lên cao hơn hoặc ngang vai -> TIẾN (W)
-        if (handsMidY < shoulderMidY + 0.05) {
-            shouldGas = true;
-            shouldBrake = false;
-
-            // Bẻ lái Vô Lăng (A / D) khi đang giơ 2 tay lái
-            if (steerMode === 'wheel' || steerMode === 'all') {
-                const dy = leftWrist.y - rightWrist.y;
-                const normalizedTilt = dy / shoulderW; // Dương = tay trái thấp hơn -> Rẽ Trái A
-
-                const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
-                const thresh = isSteeringLeft ? (baseThresh * 2.0 - 0.04) : (baseThresh * 2.0);
-                const threshR = isSteeringRight ? (baseThresh * 2.0 - 0.04) : (baseThresh * 2.0);
-
-                if (normalizedTilt > thresh) steerCmd = 1;      // A (Trái)
-                else if (normalizedTilt < -threshR) steerCmd = -1; // D (Phải)
-            }
-        } 
-        // 2. Hạ cả 2 tay xuống dưới vai (ngang ngực/bụng) -> PHANH / LÙI (S)
-        else {
-            shouldGas = false;
-            shouldBrake = true;
-        }
+    // - Khi hai tay đồng thời giơ lên cao quá vai: S
+    else if (leftState === 'HIGH' && rightState === 'HIGH') {
+        shouldBrake = true;
     }
-    // C. TRƯỜNG HỢP 3: CHỈ THẤY 1 TAY (Kích hoạt Vũ khí J / K nếu giơ cao, hoặc Thả trôi)
-    else if (leftVisible && !rightVisible) {
-        const nose = pl[0];
-        const headTopY = nose ? nose.y : (shoulderMidY - 0.15);
-        if (leftWrist.y < headTopY) {
-            isPunchL = true; // Phím J
-        }
+    // - Khi một tay dưới vai, hoặc ẩn, tay trái giơ lên quá vai: J
+    else if (leftState === 'HIGH' && (rightState === 'LOW' || rightState === 'HIDDEN')) {
+        isPunchL = true;
     }
-    else if (rightVisible && !leftVisible) {
-        const nose = pl[0];
-        const headTopY = nose ? nose.y : (shoulderMidY - 0.15);
-        if (rightWrist.y < headTopY) {
-            isPunchR = true; // Phím K
-        }
+    // - Một tay dưới vai, hoặc ẩn, tay phải giơ lên quá vai: K
+    else if (rightState === 'HIGH' && (leftState === 'LOW' || leftState === 'HIDDEN')) {
+        isPunchR = true;
+    }
+    // - khi có một trong 2 tay, hoặc cả 2 tay giơ lên hiển thị trên màn hình và ở dưới vai: W
+    else if ((leftState === 'LOW' || rightState === 'LOW') && leftState !== 'HIGH' && rightState !== 'HIGH') {
+        shouldGas = true;
+    }
+
+    // C. Bẻ lái Vô Lăng (A / D) nếu dùng chế độ wheel và thấy 2 tay
+    if ((steerMode === 'wheel' || steerMode === 'all') && leftVisible && rightVisible) {
+        const dy = leftWrist.y - rightWrist.y;
+        const normalizedTilt = dy / shoulderW; // Dương = tay trái thấp hơn -> Rẽ Trái A
+
+        const baseThresh = parseFloat(document.getElementById('steerSensSlider')?.value) || 0.08;
+        const thresh = isSteeringLeft ? (baseThresh * 2.0 - 0.04) : (baseThresh * 2.0);
+        const threshR = isSteeringRight ? (baseThresh * 2.0 - 0.04) : (baseThresh * 2.0);
+
+        if (normalizedTilt > thresh) steerCmd = 1;      // A (Trái)
+        else if (normalizedTilt < -threshR) steerCmd = -1; // D (Phải)
     }
 
     triggerAction('jump', shouldGas);  // Phím W
